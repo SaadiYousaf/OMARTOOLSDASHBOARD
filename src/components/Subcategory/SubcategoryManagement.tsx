@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { SubcategoryDto, CategoryDto } from '../../types/product';
 import './SubcategoryManagement.css'
 
-const SubcategoryManagement = ({ 
-    categories, 
-    onSubcategoryCreated 
-}: { 
-    categories: CategoryDto[], 
-    onSubcategoryCreated: () => void 
+const SubcategoryManagement = ({
+    categories,
+    onSubcategoryCreated
+}: {
+    categories: CategoryDto[],
+    onSubcategoryCreated: () => void
 }) => {
     const [subcategories, setSubcategories] = useState<SubcategoryDto[]>([]);
-    const [newSubcategory, setNewSubcategory] = useState<Omit<SubcategoryDto, 'id'>>({ 
-        name: '', 
+    const [formData, setFormData] = useState<Omit<SubcategoryDto, 'id'>>({
+        name: '',
         categoryId: categories[0]?.id || 0,
         description: '',
         imageUrl: '',
@@ -25,6 +25,8 @@ const SubcategoryManagement = ({
     const [expandedSubcategoryId, setExpandedSubcategoryId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [actionLoading, setActionLoading] = useState<{ [key: number]: 'delete' | 'toggle' | 'update' | null }>({});
 
     useEffect(() => {
         fetchSubcategories();
@@ -46,24 +48,28 @@ const SubcategoryManagement = ({
         e.preventDefault();
         setIsLoading(true);
         setError(null);
-        
+
         try {
-            const res = await fetch('http://localhost:5117/api/subcategories', {
-                method: 'POST',
+            const url = editingId
+                ? `http://localhost:5117/api/subcategories/${editingId}`
+                : 'http://localhost:5117/api/subcategories';
+
+            const method = editingId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...newSubcategory,
-                    createdAt: new Date().toISOString()
-                }),
+                body: JSON.stringify(editingId ? { ...formData, id: editingId } : formData),
             });
-            
+
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.message || 'Failed to create subcategory');
+                throw new Error(errorData.message || `Failed to ${editingId ? 'update' : 'create'} subcategory`);
             }
 
-            setNewSubcategory({ 
-                name: '', 
+            // Reset form
+            setFormData({
+                name: '',
                 categoryId: categories[0]?.id || 0,
                 description: '',
                 imageUrl: '',
@@ -72,11 +78,16 @@ const SubcategoryManagement = ({
                 isActive: true,
                 updatedAt: undefined
             });
-            
+
             await fetchSubcategories();
             onSubcategoryCreated();
+
+            if (editingId) {
+                setEditingId(null);
+                setExpandedSubcategoryId(null);
+            }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create subcategory');
+            setError(err instanceof Error ? err.message : `Failed to ${editingId ? 'update' : 'create'} subcategory`);
         } finally {
             setIsLoading(false);
         }
@@ -84,7 +95,7 @@ const SubcategoryManagement = ({
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setNewSubcategory(prev => ({
+        setFormData(prev => ({
             ...prev,
             [name]: name === 'categoryId' || name === 'displayOrder' ? Number(value) : value
         }));
@@ -94,13 +105,96 @@ const SubcategoryManagement = ({
         setExpandedSubcategoryId(expandedSubcategoryId === id ? null : id);
     };
 
+    const handleEditClick = (subcategory: SubcategoryDto) => {
+        setEditingId(subcategory.id);
+        setExpandedSubcategoryId(null);
+
+        // Pre-fill form with subcategory data
+        setFormData({
+            name: subcategory.name,
+            categoryId: subcategory.categoryId,
+            description: subcategory.description,
+            imageUrl: subcategory.imageUrl,
+            displayOrder: subcategory.displayOrder,
+            createdAt: subcategory.createdAt,
+            isActive: subcategory.isActive,
+            updatedAt: subcategory.updatedAt
+        });
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this subcategory? This action cannot be undone.')) {
+            return;
+        }
+
+        setActionLoading(prev => ({ ...prev, [id]: 'delete' }));
+        setError(null);
+
+        try {
+            const res = await fetch(`http://localhost:5117/api/subcategories/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Failed to delete subcategory');
+            }
+
+            await fetchSubcategories();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete subcategory');
+        } finally {
+            setActionLoading(prev => ({ ...prev, [id]: null }));
+        }
+    };
+
+    const handleToggleActive = async (subcategory: SubcategoryDto) => {
+        setActionLoading(prev => ({ ...prev, [subcategory.id]: 'toggle' }));
+        setError(null);
+
+        try {
+            const updatedSubcategory = { ...subcategory, isActive: !subcategory.isActive };
+
+            const res = await fetch(`http://localhost:5117/api/subcategories/${subcategory.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedSubcategory),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Failed to update subcategory status');
+            }
+
+            await fetchSubcategories();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update subcategory status');
+        } finally {
+            setActionLoading(prev => ({ ...prev, [subcategory.id]: null }));
+        }
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setFormData({
+            name: '',
+            categoryId: categories[0]?.id || 0,
+            description: '',
+            imageUrl: '',
+            displayOrder: 0,
+            createdAt: new Date().toISOString(),
+            isActive: true,
+            updatedAt: undefined
+        });
+    };
+
     const filteredSubcategories = subcategories.filter(subcat => {
-        const matchesSearch = subcat.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                             subcat.description.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        const matchesCategory = filterCategory === 'all' || 
-                              subcat.categoryId === parseInt(filterCategory);
-        
+        const matchesSearch = subcat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (subcat.description && subcat.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesCategory = filterCategory === 'all' ||
+            subcat.categoryId === parseInt(filterCategory);
+
         return matchesSearch && matchesCategory;
     });
 
@@ -130,7 +224,7 @@ const SubcategoryManagement = ({
             <div className="dashboard-content">
                 <div className="form-section">
                     <div className="form-card">
-                        <h2>Create New Subcategory</h2>
+                        <h2>{editingId ? 'Edit Subcategory' : 'Create New Subcategory'}</h2>
                         <form onSubmit={handleSubmit}>
                             <div className="form-row">
                                 <div className="form-group">
@@ -139,19 +233,19 @@ const SubcategoryManagement = ({
                                         type="text"
                                         id="name"
                                         name="name"
-                                        value={newSubcategory.name}
+                                        value={formData.name}
                                         onChange={handleInputChange}
                                         placeholder="Enter subcategory name"
                                         required
                                     />
                                 </div>
-                                
+
                                 <div className="form-group">
                                     <label htmlFor="categoryId">Category *</label>
                                     <select
                                         id="categoryId"
                                         name="categoryId"
-                                        value={newSubcategory.categoryId}
+                                        value={formData.categoryId}
                                         onChange={handleInputChange}
                                         required
                                     >
@@ -163,43 +257,43 @@ const SubcategoryManagement = ({
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div className="form-group">
                                 <label htmlFor="description">Description *</label>
                                 <textarea
                                     id="description"
                                     name="description"
-                                    value={newSubcategory.description}
+                                    value={formData.description}
                                     onChange={handleInputChange}
                                     placeholder="Enter subcategory description"
                                     required
                                     rows={3}
                                 />
                             </div>
-                            
+
                             <div className="form-group">
                                 <label htmlFor="imageUrl">Image URL *</label>
                                 <input
                                     type="text"
                                     id="imageUrl"
                                     name="imageUrl"
-                                    value={newSubcategory.imageUrl}
+                                    value={formData.imageUrl}
                                     onChange={handleInputChange}
                                     placeholder="https://example.com/image.jpg"
                                     required
                                 />
-                                {newSubcategory.imageUrl && (
+                                {formData.imageUrl && (
                                     <div className="image-preview">
-                                        <img 
-                                            src={newSubcategory.imageUrl} 
-                                            alt="Preview" 
+                                        <img
+                                            src={formData.imageUrl}
+                                            alt="Preview"
                                             onError={(e) => e.currentTarget.style.display = 'none'}
                                         />
                                         <span>Image Preview</span>
                                     </div>
                                 )}
                             </div>
-                            
+
                             <div className="form-row">
                                 <div className="form-group">
                                     <label htmlFor="displayOrder">Display Order *</label>
@@ -207,21 +301,21 @@ const SubcategoryManagement = ({
                                         type="number"
                                         id="displayOrder"
                                         name="displayOrder"
-                                        value={newSubcategory.displayOrder}
+                                        value={formData.displayOrder}
                                         onChange={handleInputChange}
                                         placeholder="0"
                                         required
                                         min="0"
                                     />
                                 </div>
-                                
+
                                 <div className="form-group">
                                     <label className="checkbox-container">
                                         <input
                                             type="checkbox"
                                             name="isActive"
-                                            checked={newSubcategory.isActive}
-                                            onChange={(e) => setNewSubcategory(prev => ({
+                                            checked={formData.isActive}
+                                            onChange={(e) => setFormData(prev => ({
                                                 ...prev,
                                                 isActive: e.target.checked
                                             }))}
@@ -231,34 +325,45 @@ const SubcategoryManagement = ({
                                     </label>
                                 </div>
                             </div>
-                            
+
                             <div className="form-footer">
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     className={`submit-btn ${isLoading ? 'loading' : ''}`}
                                     disabled={isLoading}
                                 >
                                     {isLoading ? (
                                         <>
                                             <span className="spinner"></span>
-                                            Creating...
+                                            {editingId ? 'Updating...' : 'Creating...'}
                                         </>
-                                    ) : 'Create Subcategory'}
+                                    ) : editingId ? 'Update Subcategory' : 'Create Subcategory'}
                                 </button>
-                                
+
+                                {editingId && (
+                                    <button
+                                        type="button"
+                                        className="cancel-btn"
+                                        onClick={cancelEdit}
+                                        disabled={isLoading}
+                                    >
+                                        Cancel Edit
+                                    </button>
+                                )}
+
                                 {error && <div className="error-message">{error}</div>}
                             </div>
                         </form>
                     </div>
                 </div>
-                
+
                 <div className="list-section">
                     <div className="list-header">
                         <h2>Existing Subcategories</h2>
                         <div className="search-filter">
-                            <input 
-                                type="text" 
-                                placeholder="Search subcategories..." 
+                            <input
+                                type="text"
+                                placeholder="Search subcategories..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -275,7 +380,7 @@ const SubcategoryManagement = ({
                             </select>
                         </div>
                     </div>
-                    
+
                     <div className="subcategories-list">
                         {filteredSubcategories.length === 0 ? (
                             <div className="empty-state">
@@ -286,19 +391,19 @@ const SubcategoryManagement = ({
                         ) : (
                             <div className="subcategories-container">
                                 {filteredSubcategories.map((subcategory) => (
-                                    <div 
-                                        key={subcategory.id} 
+                                    <div
+                                        key={subcategory.id}
                                         className={`subcategory-card ${expandedSubcategoryId === subcategory.id ? 'expanded' : ''}`}
                                     >
-                                        <div 
-                                            className="subcategory-summary" 
+                                        <div
+                                            className="subcategory-summary"
                                             onClick={() => toggleSubcategoryDetails(subcategory.id)}
                                         >
                                             <div className="subcategory-image">
                                                 {subcategory.imageUrl ? (
-                                                    <img 
-                                                        src={subcategory.imageUrl} 
-                                                        alt={subcategory.name} 
+                                                    <img
+                                                        src={subcategory.imageUrl}
+                                                        alt={subcategory.name}
                                                         onError={(e) => e.currentTarget.style.display = 'none'}
                                                     />
                                                 ) : (
@@ -321,31 +426,68 @@ const SubcategoryManagement = ({
                                                 {expandedSubcategoryId === subcategory.id ? '▲' : '▼'}
                                             </div>
                                         </div>
-                                        
+
                                         {expandedSubcategoryId === subcategory.id && (
                                             <div className="subcategory-details">
                                                 <p>{subcategory.description}</p>
                                                 <div className="subcategory-meta-full">
                                                     <div>
-                                                        <strong>Created:</strong> 
-                                                        <span>{new Date(subcategory.createdAt).toLocaleDateString()}</span>
+                                                        <strong>Created:</strong>
+                                                        <span>
+                                                            {subcategory.updatedAt && (
+                                                                <div>
+                                                                    <strong>Updated:</strong>
+                                                                    <span>{subcategory.updatedAt ? new Date(subcategory.updatedAt).toLocaleDateString() : 'N/A'}</span>
+                                                                </div>
+                                                            )}
+
+                                                        </span>
+
                                                     </div>
                                                     {subcategory.updatedAt && (
                                                         <div>
-                                                            <strong>Updated:</strong> 
+                                                            <strong>Updated:</strong>
                                                             <span>{new Date(subcategory.updatedAt).toLocaleDateString()}</span>
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <strong>Category ID:</strong> 
+                                                        <strong>Category ID:</strong>
                                                         <span>{subcategory.categoryId}</span>
                                                     </div>
                                                 </div>
                                                 <div className="subcategory-actions">
-                                                    <button className="action-btn edit">Edit</button>
-                                                    <button className="action-btn delete">Delete</button>
-                                                    <button className="action-btn deactivate">
-                                                        {subcategory.isActive ? 'Deactivate' : 'Activate'}
+                                                    <button
+                                                        className="action-btn edit"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditClick(subcategory);
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        className="action-btn delete"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(subcategory.id);
+                                                        }}
+                                                        disabled={actionLoading[subcategory.id] === 'delete'}
+                                                    >
+                                                        {actionLoading[subcategory.id] === 'delete' ? (
+                                                            <span className="spinner small"></span>
+                                                        ) : 'Delete'}
+                                                    </button>
+                                                    <button
+                                                        className="action-btn deactivate"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleToggleActive(subcategory);
+                                                        }}
+                                                        disabled={actionLoading[subcategory.id] === 'toggle'}
+                                                    >
+                                                        {actionLoading[subcategory.id] === 'toggle' ? (
+                                                            <span className="spinner small"></span>
+                                                        ) : subcategory.isActive ? 'Deactivate' : 'Activate'}
                                                     </button>
                                                 </div>
                                             </div>

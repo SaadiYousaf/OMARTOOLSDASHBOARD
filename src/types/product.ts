@@ -7,14 +7,14 @@ export interface Product {
   sku: string;
   name: string;
   description: string;
-  specifications: string; // JSON formatted
+  specifications: string;       // JSON formatted
   price: number;
   discountPrice?: number;
   stockQuantity: number;
-  weight?: number; // in kg
-  dimensions?: string; // "LxWxH" format
+  weight?: number;              // in kg
+  dimensions?: string;          // "LxWxH" format
   isFeatured: boolean;
-  warrantyPeriod?: string; // "1 year", "2 years", etc.
+  warrantyPeriod?: string;      // "1 year", "2 years", etc.
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -47,36 +47,41 @@ export interface ProductVariant {
   updatedAt?: string;
 }
 
+// Brand DTO matches updated Brand entity
 export interface BrandDto {
   id: number;
   name: string;
-  description?: string;  
-  logoUrl?: string;      
-  websiteUrl?: string;   
-  createdAt?: string;    
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  categoryId?: number;          // Link to Category
+  createdAt?: string;
   updatedAt?: string;
-  isActive?: boolean;    
-}
-export interface CategoryDto {
-  id: number;
-  brandId: number;
-  name: string;
-  description: string;
-  imageUrl: string;
-  displayOrder: number;
-  createdAt: string;
-  updatedAt?: string;
-  isActive: boolean;
+  isActive?: boolean;
 }
 
+// Category DTO matches updated Category entity
+// In ../../types/product.ts
+export interface CategoryDto {
+  id: number;
+  name: string;
+  description?: string;  // Make optional
+  imageUrl: string;
+  displayOrder: number;
+  isActive: boolean;
+  //createdAt: string;
+ // updatedAt?: string;
+}
+
+// Subcategory DTO matches updated Subcategory entity
 export interface SubcategoryDto {
   id: number;
   categoryId: number;
   name: string;
-  description: string;
-  imageUrl: string;
-  displayOrder: number;
-  createdAt: string;
+  description?: string;
+  imageUrl?: string;
+  displayOrder?: number;
+  createdAt?: string;
   updatedAt?: string;
-  isActive: boolean;
+  isActive?: boolean;
 }

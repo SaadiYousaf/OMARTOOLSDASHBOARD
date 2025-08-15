@@ -10,10 +10,10 @@ import DashboardHeader from './DashboardHeader';
 import StatsCard from './StatsCard';
 
 const ProductManagement = () => {
+  
     // State for all data entities
     const [allCategories, setAllCategories] = useState<CategoryDto[]>([]);
     const [brands, setBrands] = useState<BrandDto[]>([]);
-    const [categories, setCategories] = useState<CategoryDto[]>([]);
     const [subcategories, setSubcategories] = useState<SubcategoryDto[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     
@@ -59,33 +59,33 @@ const ProductManagement = () => {
         }
     }, [products]);
 
-    // Filter categories based on selected brand
+    // Update category and subcategory when brand changes
     useEffect(() => {
         if (selectedBrandId) {
-            const filtered = allCategories.filter(cat => cat.brandId === selectedBrandId);
-            setCategories(filtered);
-            setSelectedCategoryId(null);
-        } else {
-            setCategories(allCategories);
-        }
-    }, [selectedBrandId, allCategories]);
-
-    // Filter subcategories based on selected category
-    useEffect(() => {
-        if (selectedCategoryId) {
-            const filtered = subcategories.filter(sub => sub.categoryId === selectedCategoryId);
-            setFilteredSubcategories(filtered);
-
-            if (currentProduct && !filtered.some(sub => sub.id === currentProduct.subcategoryId)) {
-                setCurrentProduct(prev => ({
-                    ...prev!,
-                    subcategoryId: filtered[0]?.id || 0
-                }));
+            const brand = brands.find(b => b.id === selectedBrandId);
+            if (brand && brand.categoryId) {
+                setSelectedCategoryId(brand.categoryId);
+                
+                // Filter subcategories for this category
+                const filtered = subcategories.filter(sub => sub.categoryId === brand.categoryId);
+                setFilteredSubcategories(filtered);
+                
+                // Update current product's subcategory if needed
+                if (currentProduct && !filtered.some(sub => sub.id === currentProduct.subcategoryId)) {
+                    setCurrentProduct(prev => ({
+                        ...prev!,
+                        subcategoryId: filtered[0]?.id || 0
+                    }));
+                }
+            } else {
+                setSelectedCategoryId(null);
+                setFilteredSubcategories(subcategories);
             }
         } else {
+            setSelectedCategoryId(null);
             setFilteredSubcategories(subcategories);
         }
-    }, [selectedCategoryId, subcategories, currentProduct]);
+    }, [selectedBrandId, brands, subcategories, currentProduct]);
 
     // Main data fetching function
     const fetchInitialData = async () => {
@@ -99,10 +99,10 @@ const ProductManagement = () => {
             ]);
             
             setBrands(await brandsRes.json());
-            const allCats = await categoriesRes.json();
-            setAllCategories(allCats);
-            setCategories(allCats);
-            setSubcategories(await subcategoriesRes.json());
+            setAllCategories(await categoriesRes.json());
+            const allSubs = await subcategoriesRes.json();
+            setSubcategories(allSubs);
+            setFilteredSubcategories(allSubs);
             
             if (productsRes) {
                 const productsData = await productsRes.json();
@@ -140,11 +140,6 @@ const ProductManagement = () => {
             ...prev!,
             brandId
         }));
-    };
-
-    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const categoryId = Number(e.target.value);
-        setSelectedCategoryId(categoryId);
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,11 +220,18 @@ const ProductManagement = () => {
 
     // Product CRUD operations
     const handleEdit = (product: Product) => {
-        const subcategory = subcategories.find(sub => sub.id === product.subcategoryId);
-        const categoryId = subcategory?.categoryId || null;
-
         setSelectedBrandId(product.brandId);
-        setSelectedCategoryId(categoryId);
+        
+        // Find brand to get its category
+        const brand = brands.find(b => b.id === product.brandId);
+        if (brand && brand.categoryId) {
+            setSelectedCategoryId(brand.categoryId);
+            
+            // Filter subcategories for this category
+            const filtered = subcategories.filter(sub => sub.categoryId === brand.categoryId);
+            setFilteredSubcategories(filtered);
+        }
+
         setCurrentProduct(product);
         setSelectedImages([]);
         setActiveProductTab('form');
@@ -266,7 +268,10 @@ const ProductManagement = () => {
             isFeatured: false,
             isActive: true,
             brandId: brands[0]?.id || 0,
-            subcategoryId: subcategories[0]?.id || 0
+            subcategoryId: subcategories[0]?.id || 0,
+            weight: undefined,
+            dimensions: undefined,
+            warrantyPeriod: undefined
         });
         setSelectedImages([]);
         setActiveProductTab('form');
@@ -522,23 +527,16 @@ const ProductManagement = () => {
                                                         </select>
                                                     </div>
                                                     <div className="form-group">
-                                                        <label>Category*</label>
-                                                        <select
-                                                            name="categoryId"
-                                                            value={selectedCategoryId || ''}
-                                                            onChange={handleCategoryChange}
-                                                            required
-                                                            disabled={!currentProduct?.brandId}
-                                                        >
-                                                            <option value="">Select Category</option>
-                                                            {categories
-                                                                .filter(cat => !currentProduct?.brandId || cat.brandId === currentProduct.brandId)
-                                                                .map((category) => (
-                                                                    <option key={category.id} value={category.id}>
-                                                                        {category.name}
-                                                                    </option>
-                                                                ))}
-                                                        </select>
+                                                        <label>Category</label>
+                                                        <input
+                                                            type="text"
+                                                            value={
+                                                                selectedBrandId 
+                                                                    ? allCategories.find(c => c.id === selectedCategoryId)?.name || 'Category not found'
+                                                                    : 'Select a brand first'
+                                                            }
+                                                            disabled
+                                                        />
                                                     </div>
                                                     <div className="form-group">
                                                         <label>Subcategory*</label>
@@ -547,7 +545,7 @@ const ProductManagement = () => {
                                                             value={currentProduct?.subcategoryId || ''}
                                                             onChange={handleInputChange}
                                                             required
-                                                            disabled={!selectedCategoryId}
+                                                            disabled={!selectedBrandId}
                                                         >
                                                             <option value="">Select Subcategory</option>
                                                             {filteredSubcategories.map((sub) => (
@@ -661,6 +659,7 @@ const ProductManagement = () => {
                                                         <input
                                                             type="text"
                                                             name="dimensions"
+                                                            placeholder="e.g., 10x20x15"
                                                             value={currentProduct?.dimensions || ''}
                                                             onChange={handleInputChange}
                                                         />
@@ -670,6 +669,7 @@ const ProductManagement = () => {
                                                         <input
                                                             type="text"
                                                             name="warrantyPeriod"
+                                                            placeholder="e.g., 1 year"
                                                             value={currentProduct?.warrantyPeriod || ''}
                                                             onChange={handleInputChange}
                                                         />
@@ -741,12 +741,11 @@ const ProductManagement = () => {
                         />
                     ) : activeManagementTab === 'category' ? (
                         <CategoryManagement 
-                            brands={brands} 
-                            onCategoryCreated={refreshData} 
+                         onCategoryCreated={refreshData} 
                         />
                     ) : (
                         <SubcategoryManagement  
-                            categories={categories} 
+                            categories={allCategories} 
                             onSubcategoryCreated={refreshData} 
                         />
                     )}

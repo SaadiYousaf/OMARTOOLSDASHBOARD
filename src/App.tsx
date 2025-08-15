@@ -15,7 +15,7 @@ function App() {
         </header>
         <main>
           <ProductManagement/>
-          <ProductList />
+          {/* <ProductList /> */}
         </main>
       </div>
     </ProductServiceProvider>
