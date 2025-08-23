@@ -1,9 +1,9 @@
 // types/product.ts
 
 export interface Product {
-  id: number;
-  subcategoryId: number;
-  brandId: number;
+  id: string;
+  subcategoryId: string;
+  brandId: string;
   sku: string;
   name: string;
   description: string;
@@ -23,8 +23,8 @@ export interface Product {
 }
 
 export interface ProductImage {
-  id: number;
-  productId: number;
+  id: string;
+  productId: string;
   imageUrl: string;
   altText?: string;
   displayOrder?: number;
@@ -35,8 +35,8 @@ export interface ProductImage {
 }
 
 export interface ProductVariant {
-  id: number;
-  productId: number;
+  id: string;
+  productId: string;
   variantType: string;
   variantValue: string;
   priceAdjustment: number;
@@ -49,12 +49,12 @@ export interface ProductVariant {
 
 // Brand DTO matches updated Brand entity
 export interface BrandDto {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   logoUrl?: string;
   websiteUrl?: string;
-  categoryId?: number;          // Link to Category
+  categoryIds: string[];          // Link to Category
   createdAt?: string;
   updatedAt?: string;
   isActive?: boolean;
@@ -63,7 +63,7 @@ export interface BrandDto {
 // Category DTO matches updated Category entity
 // In ../../types/product.ts
 export interface CategoryDto {
-  id: number;
+  id: string;
   name: string;
   description?: string;  // Make optional
   imageUrl: string;
@@ -75,8 +75,8 @@ export interface CategoryDto {
 
 // Subcategory DTO matches updated Subcategory entity
 export interface SubcategoryDto {
-  id: number;
-  categoryId: number;
+  id: string;
+  categoryId: string;
   name: string;
   description?: string;
   imageUrl?: string;

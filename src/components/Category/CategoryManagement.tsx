@@ -243,7 +243,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     };
     
 
-    const handleDeleteCategory = async (id: number) => {
+    const handleDeleteCategory = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this category?')) return;
 
         setIsLoading(true);
@@ -269,7 +269,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         }
     };
 
-    const handleToggleActive = async (id: number, currentStatus: boolean) => {
+    const handleToggleActive = async (id: string, currentStatus: boolean) => {
         setIsLoading(true);
         setError(null);
         setSuccess(null);

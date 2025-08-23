@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SubcategoryDto, CategoryDto } from '../../types/product';
-import './SubcategoryManagement.css'
+import './SubcategoryManagement.css';
 
 const SubcategoryManagement = ({
     categories,
@@ -10,23 +10,21 @@ const SubcategoryManagement = ({
     onSubcategoryCreated: () => void
 }) => {
     const [subcategories, setSubcategories] = useState<SubcategoryDto[]>([]);
-    const [formData, setFormData] = useState<Omit<SubcategoryDto, 'id'>>({
+    const [formData, setFormData] = useState<Omit<SubcategoryDto, 'id' | 'createdAt' | 'updatedAt'>>({
         name: '',
-        categoryId: categories[0]?.id || 0,
+        categoryId: categories[0]?.id || '',
         description: '',
         imageUrl: '',
         displayOrder: 0,
-        createdAt: new Date().toISOString(),
         isActive: true,
-        updatedAt: undefined
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [expandedSubcategoryId, setExpandedSubcategoryId] = useState<number | null>(null);
+    const [expandedSubcategoryId, setExpandedSubcategoryId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [actionLoading, setActionLoading] = useState<{ [key: number]: 'delete' | 'toggle' | 'update' | null }>({});
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [actionLoading, setActionLoading] = useState<{ [key: string]: 'delete' | 'toggle' | 'update' | null }>({});
 
     useEffect(() => {
         fetchSubcategories();
@@ -56,10 +54,14 @@ const SubcategoryManagement = ({
 
             const method = editingId ? 'PUT' : 'POST';
 
+            const payload = editingId 
+                ? { ...formData, id: editingId }
+                : formData;
+
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editingId ? { ...formData, id: editingId } : formData),
+                body: JSON.stringify(payload),
             });
 
             if (!res.ok) {
@@ -70,13 +72,11 @@ const SubcategoryManagement = ({
             // Reset form
             setFormData({
                 name: '',
-                categoryId: categories[0]?.id || 0,
+                categoryId: categories[0]?.id || '',
                 description: '',
                 imageUrl: '',
                 displayOrder: 0,
-                createdAt: new Date().toISOString(),
                 isActive: true,
-                updatedAt: undefined
             });
 
             await fetchSubcategories();
@@ -97,11 +97,11 @@ const SubcategoryManagement = ({
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'categoryId' || name === 'displayOrder' ? Number(value) : value
+            [name]: name === 'displayOrder' ? Number(value) : value
         }));
     };
 
-    const toggleSubcategoryDetails = (id: number) => {
+    const toggleSubcategoryDetails = (id: string) => {
         setExpandedSubcategoryId(expandedSubcategoryId === id ? null : id);
     };
 
@@ -109,20 +109,17 @@ const SubcategoryManagement = ({
         setEditingId(subcategory.id);
         setExpandedSubcategoryId(null);
 
-        // Pre-fill form with subcategory data
         setFormData({
             name: subcategory.name,
             categoryId: subcategory.categoryId,
-            description: subcategory.description,
-            imageUrl: subcategory.imageUrl,
-            displayOrder: subcategory.displayOrder,
-            createdAt: subcategory.createdAt,
-            isActive: subcategory.isActive,
-            updatedAt: subcategory.updatedAt
+            description: subcategory.description || '',
+            imageUrl: subcategory.imageUrl || '',
+            displayOrder: subcategory.displayOrder || 0,
+            isActive: subcategory.isActive || true,
         });
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this subcategory? This action cannot be undone.')) {
             return;
         }
@@ -153,7 +150,10 @@ const SubcategoryManagement = ({
         setError(null);
 
         try {
-            const updatedSubcategory = { ...subcategory, isActive: !subcategory.isActive };
+            const updatedSubcategory = { 
+                ...subcategory, 
+                isActive: !subcategory.isActive,
+            };
 
             const res = await fetch(`http://localhost:5117/api/subcategories/${subcategory.id}`, {
                 method: 'PUT',
@@ -178,13 +178,11 @@ const SubcategoryManagement = ({
         setEditingId(null);
         setFormData({
             name: '',
-            categoryId: categories[0]?.id || 0,
+            categoryId: categories[0]?.id || '',
             description: '',
             imageUrl: '',
             displayOrder: 0,
-            createdAt: new Date().toISOString(),
             isActive: true,
-            updatedAt: undefined
         });
     };
 
@@ -193,7 +191,7 @@ const SubcategoryManagement = ({
             (subcat.description && subcat.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesCategory = filterCategory === 'all' ||
-            subcat.categoryId === parseInt(filterCategory);
+            subcat.categoryId === filterCategory;
 
         return matchesSearch && matchesCategory;
     });
@@ -433,16 +431,7 @@ const SubcategoryManagement = ({
                                                 <div className="subcategory-meta-full">
                                                     <div>
                                                         <strong>Created:</strong>
-                                                        <span>
-                                                            {subcategory.updatedAt && (
-                                                                <div>
-                                                                    <strong>Updated:</strong>
-                                                                    <span>{subcategory.updatedAt ? new Date(subcategory.updatedAt).toLocaleDateString() : 'N/A'}</span>
-                                                                </div>
-                                                            )}
-
-                                                        </span>
-
+                                                        <span>{subcategory.createdAt ? new Date(subcategory.createdAt).toLocaleDateString() : 'N/A'}</span>
                                                     </div>
                                                     {subcategory.updatedAt && (
                                                         <div>

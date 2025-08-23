@@ -3,13 +3,13 @@ import './BrandManagement.css'
 
 // Define types based on the backend controller
 interface CategoryDto {
-  id: number;
+  id: string;
   name: string;
 }
 
 interface BrandDto {
-  id: number;
-  categoryId: number;
+  id: string;
+  categoryIds: string[]; 
   name: string;
   description: string;
   logoUrl: string;
@@ -20,7 +20,7 @@ interface BrandDto {
 }
 
 interface ProductDto {
-  id: number;
+  id: string;
   name: string;
   sku: string;
   price: number;
@@ -29,11 +29,11 @@ interface ProductDto {
 const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => {
   const [brands, setBrands] = useState<BrandDto[]>([]);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
-  const [products, setProducts] = useState<{ [key: number]: ProductDto[] }>({});
+  const [products, setProducts] = useState<{ [key: string]: ProductDto[] }>({});
   const [isEditing, setIsEditing] = useState(false);
   const [brandForm, setBrandForm] = useState<BrandDto>({
-    id: 0,
-    categoryId: 0,
+    id: '',
+    categoryIds: [],
     name: '',
     description: '',
     logoUrl: '',
@@ -50,7 +50,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: keyof BrandDto; direction: 'asc' | 'desc' } | null>(null);
-  const [showProducts, setShowProducts] = useState<number | null>(null);
+  const [showProducts, setShowProducts] = useState<string | null>(null);
 
   const itemsPerPage = 5;
 
@@ -63,10 +63,11 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     setIsFetching(true);
     try {
       const res = await fetch('http://localhost:5117/api/brands');
+      if (!res.ok) throw new Error('Failed to fetch brands');
       const data = await res.json();
       setBrands(data);
     } catch (err) {
-      setError('Failed to load brands');
+      setError('Failed to load brands. Please check your connection.');
     } finally {
       setIsFetching(false);
     }
@@ -74,20 +75,23 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
 
   const fetchCategories = async () => {
     setIsFetchingCategories(true);
+    setError(null);
     try {
       const res = await fetch('http://localhost:5117/api/categories');
+      if (!res.ok) throw new Error('Failed to fetch categories');
       const data = await res.json();
       setCategories(data);
     } catch (err) {
-      setError('Failed to load categories');
+      setError('Failed to load categories. Please check your connection.');
     } finally {
       setIsFetchingCategories(false);
     }
   };
 
-  const fetchProductsByBrand = async (brandId: number) => {
+  const fetchProductsByBrand = async (brandId: string) => {
     try {
       const res = await fetch(`http://localhost:5117/api/brands/${brandId}/products`);
+      if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(prev => ({ ...prev, [brandId]: data }));
     } catch (err) {
@@ -108,8 +112,8 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
       return;
     }
 
-    if (!brandForm.categoryId) {
-      setError('Category is required');
+    if (brandForm.categoryIds.length === 0)  {
+      setError('At least one category is required');
       setIsLoading(false);
       return;
     }
@@ -129,7 +133,10 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
         body: JSON.stringify(brandForm),
       });
 
-      if (!res.ok) throw new Error(`Failed to ${isEditing ? 'update' : 'create'} brand`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to ${isEditing ? 'update' : 'create'} brand`);
+      }
 
       resetForm();
       fetchBrands();
@@ -148,7 +155,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     setActiveTab('create');
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this brand?')) return;
 
     setIsLoading(true);
@@ -157,6 +164,8 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     try {
       // Check if brand has products
       const productsRes = await fetch(`http://localhost:5117/api/brands/${id}/products`);
+      if (!productsRes.ok) throw new Error('Failed to check products');
+      
       const productsData = await productsRes.json();
 
       if (productsData.length > 0) {
@@ -181,8 +190,8 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
 
   const resetForm = () => {
     setBrandForm({
-      id: 0,
-      categoryId: 0,
+      id: '',
+      categoryIds: [],
       name: '',
       description: '',
       logoUrl: '',
@@ -191,6 +200,19 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
       createdAt: new Date().toISOString()
     });
     setIsEditing(false);
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setBrandForm(prev => {
+      const newCategoryIds = prev.categoryIds.includes(categoryId)
+        ? prev.categoryIds.filter(id => id !== categoryId)
+        : [...prev.categoryIds, categoryId];
+      
+      return {
+        ...prev,
+        categoryIds: newCategoryIds
+      };
+    });
   };
 
   const handleSort = (key: keyof BrandDto) => {
@@ -225,7 +247,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  const getCategoryName = (categoryId: number) => {
+  const getCategoryName = (categoryId: string) => {
     const category = categories.find(c => c.id === categoryId);
     return category ? category.name : 'Unknown';
   };
@@ -278,24 +300,22 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
                     </div>
 
                     <div className="form-group">
-                      <label>Category*</label>
-                      <select
-                        value={brandForm.categoryId}
-                        onChange={(e) => setBrandForm({
-                          ...brandForm,
-                          categoryId: parseInt(e.target.value)
-                        })}
-                        required
-                        disabled={isFetchingCategories}
-                        className="large-select"
-                      >
-                        <option value="0">Select category</option>
+                      <label>Categories*</label>
+                      <div className="category-selector">
                         {categories.map(category => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
+                          <div key={category.id} className="category-checkbox">
+                            <input
+                              type="checkbox"
+                              id={`category-${category.id}`}
+                              checked={brandForm.categoryIds.includes(category.id)}
+                              onChange={() => handleCategoryChange(category.id)}
+                            />
+                            <label htmlFor={`category-${category.id}`}>
+                              {category.name}
+                            </label>
+                          </div>
                         ))}
-                      </select>
+                      </div>
                       {isFetchingCategories && (
                         <div className="loading-text">Loading categories...</div>
                       )}
@@ -446,7 +466,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
                                 <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
                               )}
                             </th>
-                            <th>Category</th>
+                            <th>Categories</th>
                             <th>Description</th>
                             <th onClick={() => handleSort('createdAt')}>
                               Created
@@ -501,7 +521,13 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
                                     </div>
                                   </td>
                                   <td>
-                                    {getCategoryName(brand.categoryId)}
+                                    <div className="category-list">
+                                      {brand.categoryIds.map(categoryId => (
+                                        <span key={categoryId} className="category-tag">
+                                          {getCategoryName(categoryId)}
+                                        </span>
+                                      ))}
+                                    </div>
                                   </td>
                                   <td>
                                     <div className="truncate-text">

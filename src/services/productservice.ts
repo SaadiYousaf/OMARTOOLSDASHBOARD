@@ -21,7 +21,7 @@ export class ProductService implements IProductService {
     }
   }
 
-  async getProductById(id: number): Promise<Product> {
+  async getProductById(id: string): Promise<Product> {
     try {
       const response = await fetch(`${API_BASE_URL}/products/${id}`);
       
@@ -69,7 +69,7 @@ export class ProductService implements IProductService {
     }
   }
 
-  async updateProduct(id: number, productData: Partial<Product>): Promise<Product> {
+  async updateProduct(id: string, productData: Partial<Product>): Promise<Product> {
     try {
       const response = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: 'PUT',
@@ -91,7 +91,7 @@ export class ProductService implements IProductService {
     }
   }
 
-  async deleteProduct(id: number): Promise<boolean> {
+  async deleteProduct(id: string): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: 'DELETE'
@@ -108,7 +108,7 @@ export class ProductService implements IProductService {
     }
   }
 
-  async getProductsBySubcategory(subcategoryId: number): Promise<Product[]> {
+  async getProductsBySubcategory(subcategoryId: string): Promise<Product[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/products?subcategoryId=${subcategoryId}`);
   
@@ -125,7 +125,7 @@ export class ProductService implements IProductService {
   }
   
 
-  async getProductsByBrand(brandId: number): Promise<Product[]> {
+  async getProductsByBrand(brandId: string): Promise<Product[]> {
     try {
       const allProducts = await this.getAllProducts();
       return allProducts.filter(product => product.brandId === brandId);

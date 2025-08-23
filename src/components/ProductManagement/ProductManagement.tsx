@@ -25,8 +25,9 @@ const ProductManagement = () => {
     // Product form state
     const [currentProduct, setCurrentProduct] = useState<Partial<Product> | null>(null);
     const [filteredSubcategories, setFilteredSubcategories] = useState<SubcategoryDto[]>([]);
-    const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
-    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [filteredBrands, setFilteredBrands] = useState<BrandDto[]>([]);
+    const [selectedBrandId, setSelectedBrandId] = useState<string>('');
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     
     // Status indicators
@@ -59,62 +60,95 @@ const ProductManagement = () => {
         }
     }, [products]);
 
-    // Update category and subcategory when brand changes
+    // Update filtered subcategories and brands when category changes
     useEffect(() => {
-        if (selectedBrandId) {
-            const brand = brands.find(b => b.id === selectedBrandId);
-            if (brand && brand.categoryId) {
-                setSelectedCategoryId(brand.categoryId);
-                
-                // Filter subcategories for this category
-                const filtered = subcategories.filter(sub => sub.categoryId === brand.categoryId);
-                setFilteredSubcategories(filtered);
-                
-                // Update current product's subcategory if needed
-                if (currentProduct && !filtered.some(sub => sub.id === currentProduct.subcategoryId)) {
-                    setCurrentProduct(prev => ({
-                        ...prev!,
-                        subcategoryId: filtered[0]?.id || 0
-                    }));
-                }
-            } else {
-                setSelectedCategoryId(null);
-                setFilteredSubcategories(subcategories);
+        if (selectedCategoryId) {
+            // Filter subcategories for the selected category
+            const filteredSubs = subcategories.filter(sub => sub.categoryId === selectedCategoryId);
+            setFilteredSubcategories(filteredSubs);
+            
+            // Filter brands that have the selected category
+            const filteredBrands = brands.filter(brand => 
+                brand.categoryIds && brand.categoryIds.includes(selectedCategoryId)
+            );
+            setFilteredBrands(filteredBrands);
+            
+            // Update current product's subcategory if needed
+            if (currentProduct && !filteredSubs.some(sub => sub.id === currentProduct.subcategoryId)) {
+                setCurrentProduct(prev => ({
+                    ...prev!,
+                    subcategoryId: filteredSubs[0]?.id || ''
+                }));
+                setSelectedSubcategoryId(filteredSubs[0]?.id || null);
             }
         } else {
-            setSelectedCategoryId(null);
             setFilteredSubcategories(subcategories);
+            setFilteredBrands(brands);
         }
-    }, [selectedBrandId, brands, subcategories, currentProduct]);
+    }, [selectedCategoryId, brands, subcategories, currentProduct]);
+
+    // Update brand and category when editing a product
+    useEffect(() => {
+        if (currentProduct && currentProduct.subcategoryId) {
+            // Find the subcategory to determine its category
+            const subcategory = subcategories.find(s => s.id === currentProduct.subcategoryId);
+            if (subcategory) {
+                setSelectedCategoryId(subcategory.categoryId);
+                
+                // Find the brand if it exists
+                if (currentProduct.brandId) {
+                    setSelectedBrandId(currentProduct.brandId);
+                }
+            }
+        }
+    }, [currentProduct, subcategories]);
 
     // Main data fetching function
     const fetchInitialData = async () => {
         setIsLoading(true);
         try {
-            const [brandsRes, categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
-                fetch('http://localhost:5117/api/brands'),
-                fetch('http://localhost:5117/api/categories'),
-                fetch('http://localhost:5117/api/subcategories'),
-                activeManagementTab === 'product' ? fetch('http://localhost:5117/api/products') : Promise.resolve(null)
-            ]);
-            
-            setBrands(await brandsRes.json());
-            setAllCategories(await categoriesRes.json());
-            const allSubs = await subcategoriesRes.json();
-            setSubcategories(allSubs);
-            setFilteredSubcategories(allSubs);
-            
-            if (productsRes) {
-                const productsData = await productsRes.json();
-                setProducts(productsData);
-            }
+          const [brandsRes, categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
+            fetch('http://localhost:5117/api/brands'),
+            fetch('http://localhost:5117/api/categories'),
+            fetch('http://localhost:5117/api/subcategories'),
+            activeManagementTab === 'product' ? fetch('http://localhost:5117/api/products') : Promise.resolve(null)
+          ]);
+          
+          // Handle brands response
+          const brandsData = await brandsRes.json();
+          setBrands(Array.isArray(brandsData) ? brandsData : []);
+          setFilteredBrands(Array.isArray(brandsData) ? brandsData : []);
+          
+          // Handle categories response
+          const categoriesData = await categoriesRes.json();
+          setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
+          
+          // Handle subcategories response
+          const subcategoriesData = await subcategoriesRes.json();
+          const allSubs = Array.isArray(subcategoriesData) ? subcategoriesData : [];
+          setSubcategories(allSubs);
+          setFilteredSubcategories(allSubs);
+          
+          // Handle products response
+          if (productsRes) {
+            const productsData = await productsRes.json();
+            // Ensure products is always an array
+            setProducts(Array.isArray(productsData) ? productsData : []);
+          }
         } catch (err) {
-            setError('Failed to load initial data');
+          setError('Failed to load initial data');
+          // Reset all states to empty arrays on error
+          setBrands([]);
+          setFilteredBrands([]);
+          setAllCategories([]);
+          setSubcategories([]);
+          setFilteredSubcategories([]);
+          setProducts([]);
         } finally {
-            setIsLoading(false);
+          setIsLoading(false);
         }
-    };
-
+      };
+      
     // Refresh data when management tab changes
     useEffect(() => {
         fetchInitialData();
@@ -133,14 +167,40 @@ const ProductManagement = () => {
         }));
     };
 
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const categoryId = e.target.value;
+        setSelectedCategoryId(categoryId);
+        
+        // Reset brand and subcategory when category changes
+        setSelectedBrandId('');
+        setSelectedSubcategoryId(null);
+        
+        setCurrentProduct(prev => ({
+            ...prev!,
+            categoryId,
+            brandId: '',
+            subcategoryId: ''
+        }));
+    };
+
     const handleBrandChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const brandId = Number(e.target.value);
+        const brandId = e.target.value;
         setSelectedBrandId(brandId);
         setCurrentProduct(prev => ({
             ...prev!,
             brandId
         }));
     };
+    const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const subcategoryId = e.target.value;
+        setSelectedSubcategoryId(subcategoryId);
+        setCurrentProduct(prev => ({
+            ...prev!,
+            subcategoryId
+        }));
+    };
+    
+
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -149,13 +209,13 @@ const ProductManagement = () => {
     };
 
     // Image upload handler
-    const uploadImages = async (productId: number) => {
+    const uploadImages = async (productId: string) => {
         if (selectedImages.length === 0) return [];
 
         const uploadPromises = selectedImages.map(async (image, index) => {
             const formData = new FormData();
             formData.append('file', image);
-            formData.append('productId', productId.toString());
+            formData.append('productId', productId);
             formData.append('altText', currentProduct?.name || 'Product Image');
             formData.append('isPrimary', index === 0 ? 'true' : 'false');
 
@@ -179,6 +239,12 @@ const ProductManagement = () => {
         e.preventDefault();
         if (!currentProduct) return;
 
+        // Validate required fields
+        if (!currentProduct.brandId || !currentProduct.subcategoryId) {
+            setError('Brand and Subcategory are required fields');
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
         setSuccess(false);
@@ -189,18 +255,35 @@ const ProductManagement = () => {
                 ? `http://localhost:5117/api/products/${currentProduct.id}`
                 : 'http://localhost:5117/api/products';
 
+            // Ensure all required fields are included
+            const productData = {
+                ...currentProduct,
+                // Ensure these are always included
+                brandId: currentProduct.brandId,
+                subcategoryId: currentProduct.subcategoryId,
+                // Ensure boolean fields have proper values
+                isActive: currentProduct.isActive !== false,
+                isFeatured: currentProduct.isFeatured || false,
+                // Ensure numeric fields are properly formatted
+                price: Number(currentProduct.price) || 0,
+                stockQuantity: Number(currentProduct.stockQuantity) || 0,
+                discountPrice: currentProduct.discountPrice ? Number(currentProduct.discountPrice) : null,
+                weight: currentProduct.weight ? Number(currentProduct.weight) : null,
+            };
+
             const productResponse = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentProduct),
+                body: JSON.stringify(productData),
             });
 
             if (!productResponse.ok) {
-                throw new Error(await productResponse.text());
+                const errorData = await productResponse.json();
+                throw new Error(errorData.message || `Failed to ${currentProduct.id ? 'update' : 'create'} product`);
             }
 
-            const productData = await productResponse.json();
-            const productId = currentProduct.id || productData.id;
+            const responseData = await productResponse.json();
+            const productId = currentProduct.id || responseData.id;
 
             if (selectedImages.length > 0 && productId) {
                 await uploadImages(productId);
@@ -210,6 +293,9 @@ const ProductManagement = () => {
             setSuccess(true);
             setCurrentProduct(null);
             setSelectedImages([]);
+            setSelectedCategoryId('');
+            setSelectedBrandId('');
+            setSelectedSubcategoryId(null);
             setActiveProductTab('list');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save product');
@@ -220,24 +306,12 @@ const ProductManagement = () => {
 
     // Product CRUD operations
     const handleEdit = (product: Product) => {
-        setSelectedBrandId(product.brandId);
-        
-        // Find brand to get its category
-        const brand = brands.find(b => b.id === product.brandId);
-        if (brand && brand.categoryId) {
-            setSelectedCategoryId(brand.categoryId);
-            
-            // Filter subcategories for this category
-            const filtered = subcategories.filter(sub => sub.categoryId === brand.categoryId);
-            setFilteredSubcategories(filtered);
-        }
-
         setCurrentProduct(product);
         setSelectedImages([]);
         setActiveProductTab('form');
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this product?')) return;
 
         setIsLoading(true);
@@ -256,8 +330,15 @@ const ProductManagement = () => {
     };
 
     const handleNewProduct = () => {
-        setSelectedBrandId(null);
-        setSelectedCategoryId(null);
+        setSelectedCategoryId('');
+        setSelectedBrandId('');
+        setSelectedSubcategoryId(null);
+        
+        // Set default values for required fields
+        const defaultCategoryId = allCategories.length > 0 ? allCategories[0].id : '';
+        const defaultSubcategoryId = subcategories.length > 0 ? subcategories[0].id : '';
+        const defaultBrandId = brands.length > 0 ? brands[0].id : '';
+        
         setCurrentProduct({
             sku: '',
             name: '',
@@ -267,8 +348,8 @@ const ProductManagement = () => {
             stockQuantity: 0,
             isFeatured: false,
             isActive: true,
-            brandId: brands[0]?.id || 0,
-            subcategoryId: subcategories[0]?.id || 0,
+            brandId: defaultBrandId,
+            subcategoryId: defaultSubcategoryId,
             weight: undefined,
             dimensions: undefined,
             warrantyPeriod: undefined
@@ -374,6 +455,9 @@ const ProductManagement = () => {
                                                 className="btn btn-secondary"
                                                 onClick={() => {
                                                     setCurrentProduct(null);
+                                                    setSelectedCategoryId('');
+                                                    setSelectedBrandId('');
+                                                    setSelectedSubcategoryId(null);
                                                     setActiveProductTab('list');
                                                 }}
                                                 disabled={isLoading}
@@ -407,7 +491,7 @@ const ProductManagement = () => {
                                                                 <div className="loading-spinner">Loading products...</div>
                                                             </td>
                                                         </tr>
-                                                    ) : products.map((product) => (
+                                                    ) : Array.isArray(products) && products.map((product) => (
                                                         <tr key={product.id}>
                                                             <td>{product.id}</td>
                                                             <td>
@@ -511,6 +595,38 @@ const ProductManagement = () => {
                                                 <div className="form-section">
                                                     <h3>Category & Brand</h3>
                                                     <div className="form-group">
+                                                        <label>Category*</label>
+                                                        <select
+                                                            value={selectedCategoryId || ''}
+                                                            onChange={handleCategoryChange}
+                                                            required
+                                                        >
+                                                            <option value="">Select Category</option>
+                                                            {allCategories.map((category) => (
+                                                                <option key={category.id} value={category.id}>
+                                                                    {category.name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Subcategory*</label>
+                                                        <select
+                                                            name="subcategoryId"
+                                                            value={currentProduct?.subcategoryId || ''}
+                                                            onChange={handleSubcategoryChange}
+                                                            required
+                                                            disabled={!selectedCategoryId}
+                                                        >
+                                                            <option value="">Select Subcategory</option>
+                                                            {filteredSubcategories.map((sub) => (
+                                                                <option key={sub.id} value={sub.id}>
+                                                                    {sub.name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="form-group">
                                                         <label>Brand*</label>
                                                         <select
                                                             name="brandId"
@@ -519,38 +635,9 @@ const ProductManagement = () => {
                                                             required
                                                         >
                                                             <option value="">Select Brand</option>
-                                                            {brands.map((brand) => (
+                                                            {filteredBrands.map((brand) => (
                                                                 <option key={brand.id} value={brand.id}>
                                                                     {brand.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Category</label>
-                                                        <input
-                                                            type="text"
-                                                            value={
-                                                                selectedBrandId 
-                                                                    ? allCategories.find(c => c.id === selectedCategoryId)?.name || 'Category not found'
-                                                                    : 'Select a brand first'
-                                                            }
-                                                            disabled
-                                                        />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Subcategory*</label>
-                                                        <select
-                                                            name="subcategoryId"
-                                                            value={currentProduct?.subcategoryId || ''}
-                                                            onChange={handleInputChange}
-                                                            required
-                                                            disabled={!selectedBrandId}
-                                                        >
-                                                            <option value="">Select Subcategory</option>
-                                                            {filteredSubcategories.map((sub) => (
-                                                                <option key={sub.id} value={sub.id}>
-                                                                    {sub.name}
                                                                 </option>
                                                             ))}
                                                         </select>
@@ -723,6 +810,9 @@ const ProductManagement = () => {
                                                     className="btn btn-secondary"
                                                     onClick={() => {
                                                         setCurrentProduct(null);
+                                                        setSelectedCategoryId('');
+                                                        setSelectedBrandId('');
+                                                        setSelectedSubcategoryId(null);
                                                         setActiveProductTab('list');
                                                     }}
                                                     disabled={isLoading}
