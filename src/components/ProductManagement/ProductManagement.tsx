@@ -4,7 +4,7 @@ import { Product, BrandDto, SubcategoryDto, CategoryDto, ProductImage } from '..
 import BrandManagement from '../Brands/BrandManagement';
 import CategoryManagement from '../Category/CategoryManagement';
 import SubcategoryManagement from '../Subcategory/SubcategoryManagement';
-import { FiPlus, FiEdit, FiTrash2, FiX, FiCheck, FiUpload, FiHome, FiTag, FiLayers, FiGrid } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiX, FiCheck, FiUpload, FiHome, FiTag, FiLayers, FiGrid, FiDollarSign } from 'react-icons/fi';
 import DashboardSidebar from './DasboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import StatsCard from './StatsCard';
@@ -27,7 +27,8 @@ const ProductManagement = () => {
     const [filteredSubcategories, setFilteredSubcategories] = useState<SubcategoryDto[]>([]);
     const [filteredBrands, setFilteredBrands] = useState<BrandDto[]>([]);
     const [selectedBrandId, setSelectedBrandId] = useState<string>('');
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');    
+    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     
     // Status indicators
@@ -40,7 +41,8 @@ const ProductManagement = () => {
         totalProducts: 0,
         activeProducts: 0,
         featuredProducts: 0,
-        outOfStock: 0
+        outOfStock: 0,
+        redemptionProducts: 0
     });
 
     // Fetch all initial data
@@ -55,7 +57,8 @@ const ProductManagement = () => {
                 totalProducts: products.length,
                 activeProducts: products.filter(p => p.isActive).length,
                 featuredProducts: products.filter(p => p.isFeatured).length,
-                outOfStock: products.filter(p => p.stockQuantity <= 0).length
+                outOfStock: products.filter(p => p.stockQuantity <= 0).length,
+                redemptionProducts: products.filter(p => p.isRedemption).length
             });
         }
     }, [products]);
@@ -201,7 +204,6 @@ const ProductManagement = () => {
     };
     
 
-
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             setSelectedImages(Array.from(e.target.files));
@@ -264,6 +266,7 @@ const ProductManagement = () => {
                 // Ensure boolean fields have proper values
                 isActive: currentProduct.isActive !== false,
                 isFeatured: currentProduct.isFeatured || false,
+                isRedemption: currentProduct.isRedemption || false,
                 // Ensure numeric fields are properly formatted
                 price: Number(currentProduct.price) || 0,
                 stockQuantity: Number(currentProduct.stockQuantity) || 0,
@@ -345,6 +348,7 @@ const ProductManagement = () => {
             description: '',
             specifications: '{}',
             price: 0,
+            isRedemption: false,
             stockQuantity: 0,
             isFeatured: false,
             isActive: true,
@@ -432,6 +436,12 @@ const ProductManagement = () => {
                                         trend="down"
                                         danger
                                     />
+                                    <StatsCard 
+                                        title="Redemption Products" 
+                                        value={stats.redemptionProducts} 
+                                        icon={<FiDollarSign />}
+                                        trend="up"
+                                    />
                                 </div>
                             )}
 
@@ -480,6 +490,7 @@ const ProductManagement = () => {
                                                         <th>SKU</th>
                                                         <th>Price</th>
                                                         <th>Stock</th>
+                                                        <th>Redemption</th>
                                                         <th>Status</th>
                                                         <th>Actions</th>
                                                     </tr>
@@ -487,7 +498,7 @@ const ProductManagement = () => {
                                                 <tbody>
                                                     {isLoading && !products.length ? (
                                                         <tr>
-                                                            <td colSpan={8} className="text-center">
+                                                            <td colSpan={9} className="text-center">
                                                                 <div className="loading-spinner">Loading products...</div>
                                                             </td>
                                                         </tr>
@@ -521,6 +532,13 @@ const ProductManagement = () => {
                                                                     product.stockQuantity > 0 ? 'low-stock' : 'out-of-stock'
                                                                 }`}>
                                                                     {product.stockQuantity}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className={`status-badge ${
+                                                                    product.isRedemption ? 'redemption' : 'regular'
+                                                                }`}>
+                                                                    {product.isRedemption ? 'Yes' : 'No'}
                                                                 </span>
                                                             </td>
                                                             <td>
@@ -784,6 +802,16 @@ const ProductManagement = () => {
                                                             id="isActive"
                                                         />
                                                         <label htmlFor="isActive">Active</label>
+                                                    </div>
+                                                    <div className="form-group checkbox-group">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="isRedemption"
+                                                            checked={currentProduct?.isRedemption || false}
+                                                            onChange={handleInputChange}
+                                                            id="isRedemption"
+                                                        />
+                                                        <label htmlFor="isRedemption">Is Redemption Product</label>
                                                     </div>
                                                     <div className="form-group">
                                                         <label>Specifications (JSON)</label>

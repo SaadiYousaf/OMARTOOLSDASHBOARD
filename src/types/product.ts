@@ -11,6 +11,7 @@ export interface Product {
   price: number;
   discountPrice?: number;
   stockQuantity: number;
+  isRedemption: boolean; 
   weight?: number;              // in kg
   dimensions?: string;          // "LxWxH" format
   isFeatured: boolean;
