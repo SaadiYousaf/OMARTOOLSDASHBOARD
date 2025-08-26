@@ -9,6 +9,7 @@ export interface Product {
   description: string;
   specifications: string;       // JSON formatted
   price: number;
+  tagLine:string;
   discountPrice?: number;
   stockQuantity: number;
   isRedemption: boolean; 

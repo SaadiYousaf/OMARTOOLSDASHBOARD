@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import './OrderManagement.css';
 
-const OrderManagement = () => {
+const OrderManagement = ({ onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -141,6 +141,9 @@ const OrderManagement = () => {
         <div className="header-actions">
           <button onClick={fetchOrders} disabled={isLoading}>
             <FiRefreshCw /> Refresh
+          </button>
+                 <button onClick={onLogout} className="logout-btn">
+            Logout
           </button>
         </div>
       </div>

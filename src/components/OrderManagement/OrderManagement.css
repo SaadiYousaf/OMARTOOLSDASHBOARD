@@ -17,7 +17,31 @@
     align-items: center;
     gap: 10px;
   }
+  /* Add to OrderManagement.css */
+.logout-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
   
+  .logout-btn:hover {
+    background-color: #d32f2f;
+  }
+  
+  /* For the header in App.css */
+  .App-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
   .header-actions button {
     display: flex;
     align-items: center;

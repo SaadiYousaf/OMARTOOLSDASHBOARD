@@ -4,33 +4,33 @@ import { Product, BrandDto, SubcategoryDto, CategoryDto, ProductImage } from '..
 import BrandManagement from '../Brands/BrandManagement';
 import CategoryManagement from '../Category/CategoryManagement';
 import SubcategoryManagement from '../Subcategory/SubcategoryManagement';
-import { FiPlus, FiEdit, FiTrash2, FiX, FiCheck, FiUpload, FiHome, FiTag, FiLayers, FiGrid, FiDollarSign } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiX, FiCheck, FiUpload, FiHome, FiTag, FiLayers, FiGrid, FiDollarSign, FiSearch } from 'react-icons/fi';
 import DashboardSidebar from './DasboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import StatsCard from './StatsCard';
 
 const ProductManagement = () => {
-  
+
     // State for all data entities
     const [allCategories, setAllCategories] = useState<CategoryDto[]>([]);
     const [brands, setBrands] = useState<BrandDto[]>([]);
     const [subcategories, setSubcategories] = useState<SubcategoryDto[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
-    
+
     // UI state management
     const [activeManagementTab, setActiveManagementTab] = useState<'product' | 'brand' | 'category' | 'subcategory'>('product');
     const [activeProductTab, setActiveProductTab] = useState<'list' | 'form'>('list');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    
+
     // Product form state
     const [currentProduct, setCurrentProduct] = useState<Partial<Product> | null>(null);
     const [filteredSubcategories, setFilteredSubcategories] = useState<SubcategoryDto[]>([]);
     const [filteredBrands, setFilteredBrands] = useState<BrandDto[]>([]);
     const [selectedBrandId, setSelectedBrandId] = useState<string>('');
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');    
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
     const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
-    
+
     // Status indicators
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -44,6 +44,11 @@ const ProductManagement = () => {
         outOfStock: 0,
         redemptionProducts: 0
     });
+
+    // Search and filter state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
     // Fetch all initial data
     useEffect(() => {
@@ -69,13 +74,13 @@ const ProductManagement = () => {
             // Filter subcategories for the selected category
             const filteredSubs = subcategories.filter(sub => sub.categoryId === selectedCategoryId);
             setFilteredSubcategories(filteredSubs);
-            
+
             // Filter brands that have the selected category
-            const filteredBrands = brands.filter(brand => 
+            const filteredBrands = brands.filter(brand =>
                 brand.categoryIds && brand.categoryIds.includes(selectedCategoryId)
             );
             setFilteredBrands(filteredBrands);
-            
+
             // Update current product's subcategory if needed
             if (currentProduct && !filteredSubs.some(sub => sub.id === currentProduct.subcategoryId)) {
                 setCurrentProduct(prev => ({
@@ -97,7 +102,7 @@ const ProductManagement = () => {
             const subcategory = subcategories.find(s => s.id === currentProduct.subcategoryId);
             if (subcategory) {
                 setSelectedCategoryId(subcategory.categoryId);
-                
+
                 // Find the brand if it exists
                 if (currentProduct.brandId) {
                     setSelectedBrandId(currentProduct.brandId);
@@ -106,52 +111,74 @@ const ProductManagement = () => {
         }
     }, [currentProduct, subcategories]);
 
+    // Filter products based on search term and featured filter
+    useEffect(() => {
+        let results = products;
+        
+        if (searchTerm) {
+            results = results.filter(product =>
+                product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (product.tagLine && product.tagLine.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        }
+
+        if (showFeaturedOnly) {
+            results = results.filter(product => product.isFeatured);
+        }
+
+        setFilteredProducts(results);
+    }, [searchTerm, showFeaturedOnly, products]);
+
     // Main data fetching function
     const fetchInitialData = async () => {
         setIsLoading(true);
         try {
-          const [brandsRes, categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
-            fetch('http://localhost:5117/api/brands'),
-            fetch('http://localhost:5117/api/categories'),
-            fetch('http://localhost:5117/api/subcategories'),
-            activeManagementTab === 'product' ? fetch('http://localhost:5117/api/products') : Promise.resolve(null)
-          ]);
-          
-          // Handle brands response
-          const brandsData = await brandsRes.json();
-          setBrands(Array.isArray(brandsData) ? brandsData : []);
-          setFilteredBrands(Array.isArray(brandsData) ? brandsData : []);
-          
-          // Handle categories response
-          const categoriesData = await categoriesRes.json();
-          setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
-          
-          // Handle subcategories response
-          const subcategoriesData = await subcategoriesRes.json();
-          const allSubs = Array.isArray(subcategoriesData) ? subcategoriesData : [];
-          setSubcategories(allSubs);
-          setFilteredSubcategories(allSubs);
-          
-          // Handle products response
-          if (productsRes) {
-            const productsData = await productsRes.json();
-            // Ensure products is always an array
-            setProducts(Array.isArray(productsData) ? productsData : []);
-          }
+            const [brandsRes, categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
+                fetch('http://localhost:5117/api/brands'),
+                fetch('http://localhost:5117/api/categories'),
+                fetch('http://localhost:5117/api/subcategories'),
+                activeManagementTab === 'product' ? fetch('http://localhost:5117/api/products') : Promise.resolve(null)
+            ]);
+
+            // Handle brands response
+            const brandsData = await brandsRes.json();
+            setBrands(Array.isArray(brandsData) ? brandsData : []);
+            setFilteredBrands(Array.isArray(brandsData) ? brandsData : []);
+
+            // Handle categories response
+            const categoriesData = await categoriesRes.json();
+            setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
+
+            // Handle subcategories response
+            const subcategoriesData = await subcategoriesRes.json();
+            const allSubs = Array.isArray(subcategoriesData) ? subcategoriesData : [];
+            setSubcategories(allSubs);
+            setFilteredSubcategories(allSubs);
+
+            // Handle products response
+            if (productsRes) {
+                const productsData = await productsRes.json();
+                // Ensure products is always an array
+                setProducts(Array.isArray(productsData) ? productsData : []);
+                setFilteredProducts(Array.isArray(productsData) ? productsData : []);
+            }
         } catch (err) {
-          setError('Failed to load initial data');
-          // Reset all states to empty arrays on error
-          setBrands([]);
-          setFilteredBrands([]);
-          setAllCategories([]);
-          setSubcategories([]);
-          setFilteredSubcategories([]);
-          setProducts([]);
+            setError('Failed to load initial data');
+            // Reset all states to empty arrays on error
+            setBrands([]);
+            setFilteredBrands([]);
+            setAllCategories([]);
+            setSubcategories([]);
+            setFilteredSubcategories([]);
+            setProducts([]);
+            setFilteredProducts([]);
         } finally {
-          setIsLoading(false);
+            setIsLoading(false);
         }
-      };
-      
+    };
+
     // Refresh data when management tab changes
     useEffect(() => {
         fetchInitialData();
@@ -173,11 +200,11 @@ const ProductManagement = () => {
     const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const categoryId = e.target.value;
         setSelectedCategoryId(categoryId);
-        
+
         // Reset brand and subcategory when category changes
         setSelectedBrandId('');
         setSelectedSubcategoryId(null);
-        
+
         setCurrentProduct(prev => ({
             ...prev!,
             categoryId,
@@ -202,7 +229,7 @@ const ProductManagement = () => {
             subcategoryId
         }));
     };
-    
+
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -253,7 +280,7 @@ const ProductManagement = () => {
 
         try {
             const method = currentProduct.id ? 'PUT' : 'POST';
-            const url = currentProduct.id 
+            const url = currentProduct.id
                 ? `http://localhost:5117/api/products/${currentProduct.id}`
                 : 'http://localhost:5117/api/products';
 
@@ -336,12 +363,12 @@ const ProductManagement = () => {
         setSelectedCategoryId('');
         setSelectedBrandId('');
         setSelectedSubcategoryId(null);
-        
+
         // Set default values for required fields
         const defaultCategoryId = allCategories.length > 0 ? allCategories[0].id : '';
         const defaultSubcategoryId = subcategories.length > 0 ? subcategories[0].id : '';
         const defaultBrandId = brands.length > 0 ? brands[0].id : '';
-        
+
         setCurrentProduct({
             sku: '',
             name: '',
@@ -369,21 +396,21 @@ const ProductManagement = () => {
 
     return (
         <div className={`dashboard-container ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-            <DashboardSidebar 
+            <DashboardSidebar
                 activeTab={activeManagementTab}
                 onTabChange={setActiveManagementTab}
                 collapsed={sidebarCollapsed}
                 onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
             />
-            
+
             <div className="dashboard-main">
-                <DashboardHeader 
-                    title={activeManagementTab === 'product' ? 'Product Management' : 
-                          activeManagementTab === 'brand' ? 'Brand Management' :
-                          activeManagementTab === 'category' ? 'Category Management' : 'Subcategory Management'}
+                <DashboardHeader
+                    title={activeManagementTab === 'product' ? 'Product Management' :
+                        activeManagementTab === 'brand' ? 'Brand Management' :
+                            activeManagementTab === 'category' ? 'Category Management' : 'Subcategory Management'}
                     onRefresh={refreshData}
                 />
-                
+
                 {error && (
                     <div className="alert alert-error">
                         <div className="alert-content">
@@ -411,34 +438,34 @@ const ProductManagement = () => {
                         <>
                             {activeProductTab === 'list' && (
                                 <div className="stats-grid">
-                                    <StatsCard 
-                                        title="Total Products" 
-                                        value={stats.totalProducts} 
+                                    <StatsCard
+                                        title="Total Products"
+                                        value={stats.totalProducts}
                                         icon={<FiTag />}
                                         trend="up"
                                     />
-                                    <StatsCard 
-                                        title="Active Products" 
-                                        value={stats.activeProducts} 
+                                    <StatsCard
+                                        title="Active Products"
+                                        value={stats.activeProducts}
                                         icon={<FiCheck />}
                                         trend="neutral"
                                     />
-                                    <StatsCard 
-                                        title="Featured Products" 
-                                        value={stats.featuredProducts} 
+                                    <StatsCard
+                                        title="Featured Products"
+                                        value={stats.featuredProducts}
                                         icon={<FiPlus />}
                                         trend="up"
                                     />
-                                    <StatsCard 
-                                        title="Out of Stock" 
-                                        value={stats.outOfStock} 
+                                    <StatsCard
+                                        title="Out of Stock"
+                                        value={stats.outOfStock}
                                         icon={<FiX />}
                                         trend="down"
                                         danger
                                     />
-                                    <StatsCard 
-                                        title="Redemption Products" 
-                                        value={stats.redemptionProducts} 
+                                    <StatsCard
+                                        title="Redemption Products"
+                                        value={stats.redemptionProducts}
                                         icon={<FiDollarSign />}
                                         trend="up"
                                     />
@@ -448,18 +475,40 @@ const ProductManagement = () => {
                             <div className="card">
                                 <div className="card-header">
                                     <h2>
-                                        {activeProductTab === 'list' ? 'Product List' : 
-                                         currentProduct?.id ? 'Edit Product' : 'Create New Product'}
+                                        {activeProductTab === 'list' ? 'Product List' :
+                                            currentProduct?.id ? 'Edit Product' : 'Create New Product'}
                                     </h2>
                                     <div className="card-actions">
                                         {activeProductTab === 'list' ? (
-                                            <button
-                                                className="btn btn-primary"
-                                                onClick={handleNewProduct}
-                                                disabled={isLoading}
-                                            >
-                                                <FiPlus /> New Product
-                                            </button>
+                                            <>
+                                                <div className="search-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginRight: '1rem' }}>
+                                                    <div className="search-input-wrapper" style={{ position: 'relative' }}>
+                                                        <FiSearch style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Search products..."
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            style={{ paddingLeft: '35px', width: '250px', borderRadius: '4px', border: '1px solid #ddd', height: '38px' }}
+                                                        />
+                                                    </div>
+                                                    <label className="featured-filter" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={showFeaturedOnly}
+                                                            onChange={(e) => setShowFeaturedOnly(e.target.checked)}
+                                                        />
+                                                        Show Featured Only
+                                                    </label>
+                                                </div>
+                                                <button
+                                                    className="btn btn-primary"
+                                                    onClick={handleNewProduct}
+                                                    disabled={isLoading}
+                                                >
+                                                    <FiPlus /> New Product
+                                                </button>
+                                            </>
                                         ) : (
                                             <button
                                                 className="btn btn-secondary"
@@ -487,7 +536,7 @@ const ProductManagement = () => {
                                                         <th>ID</th>
                                                         <th>Image</th>
                                                         <th>Name</th>
-                                                        <th>SKU</th>
+                                                        <th>TagLine</th>
                                                         <th>Price</th>
                                                         <th>Stock</th>
                                                         <th>Redemption</th>
@@ -496,81 +545,86 @@ const ProductManagement = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {isLoading && !products.length ? (
+                                                    {isLoading && !filteredProducts.length ? (
                                                         <tr>
                                                             <td colSpan={9} className="text-center">
                                                                 <div className="loading-spinner">Loading products...</div>
                                                             </td>
                                                         </tr>
-                                                    ) : Array.isArray(products) && products.map((product) => (
-                                                        <tr key={product.id}>
-                                                            <td>{product.id}</td>
-                                                            <td>
-                                                                {product.images?.[0]?.imageUrl ? (
-                                                                    <img 
-                                                                        src={product.images[0].imageUrl} 
-                                                                        alt={product.name} 
-                                                                        className="product-thumbnail"
-                                                                    />
-                                                                ) : (
-                                                                    <div className="thumbnail-placeholder">
-                                                                        <FiTag />
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                <div className="product-name">{product.name}</div>
-                                                                <div className="product-brand">
-                                                                    {brands.find(b => b.id === product.brandId)?.name}
-                                                                </div>
-                                                            </td>
-                                                            <td>{product.sku}</td>
-                                                            <td>${product.price?.toFixed(2)}</td>
-                                                            <td>
-                                                                <span className={`stock-badge ${
-                                                                    product.stockQuantity > 10 ? 'in-stock' : 
-                                                                    product.stockQuantity > 0 ? 'low-stock' : 'out-of-stock'
-                                                                }`}>
-                                                                    {product.stockQuantity}
-                                                                </span>
-                                                            </td>
-                                                            <td>
-                                                                <span className={`status-badge ${
-                                                                    product.isRedemption ? 'redemption' : 'regular'
-                                                                }`}>
-                                                                    {product.isRedemption ? 'Yes' : 'No'}
-                                                                </span>
-                                                            </td>
-                                                            <td>
-                                                                <span className={`status-badge ${
-                                                                    product.isActive ? 'active' : 'inactive'
-                                                                }`}>
-                                                                    {product.isActive ? 'Active' : 'Inactive'}
-                                                                    {product.isFeatured && product.isActive && ' ★'}
-                                                                </span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="action-buttons">
-                                                                    <button
-                                                                        className="btn-icon btn-edit"
-                                                                        onClick={() => handleEdit(product)}
-                                                                        disabled={isLoading}
-                                                                        title="Edit"
-                                                                    >
-                                                                        <FiEdit />
-                                                                    </button>
-                                                                    <button
-                                                                        className="btn-icon btn-delete"
-                                                                        onClick={() => handleDelete(product.id!)}
-                                                                        disabled={isLoading}
-                                                                        title="Delete"
-                                                                    >
-                                                                        <FiTrash2 />
-                                                                    </button>
-                                                                </div>
+                                                    ) : filteredProducts.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={9} className="text-center">
+                                                                <div className="no-results">No products found matching your criteria</div>
                                                             </td>
                                                         </tr>
-                                                    ))}
+                                                    ) : (
+                                                        filteredProducts.map((product) => (
+                                                            <tr key={product.id}>
+                                                                <td>{product.id}</td>
+                                                                <td>
+                                                                    {product.images?.[0]?.imageUrl ? (
+                                                                        <img
+                                                                            src={product.images[0].imageUrl}
+                                                                            alt={product.name}
+                                                                            className="product-thumbnail"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="thumbnail-placeholder">
+                                                                            <FiTag />
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                                <td>
+                                                                    <div className="product-name">{product.name}</div>
+                                                                    <div className="product-brand">
+                                                                        {brands.find(b => b.id === product.brandId)?.name}
+                                                                    </div>
+                                                                </td>
+                                                                <td>{product.tagLine}</td>
+                                                                <td>${product.price?.toFixed(2)}</td>
+                                                                <td>
+                                                                    <span className={`stock-badge ${product.stockQuantity > 10 ? 'in-stock' :
+                                                                            product.stockQuantity > 0 ? 'low-stock' : 'out-of-stock'
+                                                                        }`}>
+                                                                        {product.stockQuantity}
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <span className={`status-badge ${product.isRedemption ? 'redemption' : 'regular'
+                                                                        }`}>
+                                                                        {product.isRedemption ? 'Yes' : 'No'}
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <span className={`status-badge ${product.isActive ? 'active' : 'inactive'
+                                                                        }`}>
+                                                                        {product.isActive ? 'Active' : 'Inactive'}
+                                                                        {product.isFeatured && product.isActive && ' ★'}
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="action-buttons">
+                                                                        <button
+                                                                            className="btn-icon btn-edit"
+                                                                            onClick={() => handleEdit(product)}
+                                                                            disabled={isLoading}
+                                                                            title="Edit"
+                                                                        >
+                                                                            <FiEdit />
+                                                                        </button>
+                                                                        <button
+                                                                            className="btn-icon btn-delete"
+                                                                            onClick={() => handleDelete(product.id!)}
+                                                                            disabled={isLoading}
+                                                                            title="Delete"
+                                                                        >
+                                                                            <FiTrash2 />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -597,6 +651,16 @@ const ProductManagement = () => {
                                                             value={currentProduct?.name || ''}
                                                             onChange={handleInputChange}
                                                             required
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Tag Line</label>
+                                                        <input
+                                                            type="text"
+                                                            name="tagLine"
+                                                            placeholder="e.g., Best Seller, New Arrival, Limited Edition"
+                                                            value={currentProduct?.tagLine || ''}
+                                                            onChange={handleInputChange}
                                                         />
                                                     </div>
                                                     <div className="form-group">
@@ -714,8 +778,8 @@ const ProductManagement = () => {
                                                             />
                                                         </label>
                                                         <div className="file-upload-hint">
-                                                            {selectedImages.length > 0 ? 
-                                                                `${selectedImages.length} files selected` : 
+                                                            {selectedImages.length > 0 ?
+                                                                `${selectedImages.length} files selected` :
                                                                 'No files selected'}
                                                         </div>
                                                     </div>
@@ -729,10 +793,10 @@ const ProductManagement = () => {
                                                                             src={URL.createObjectURL(image)}
                                                                             alt={`Preview ${index + 1}`}
                                                                         />
-                                                                        <button 
+                                                                        <button
                                                                             className="remove-image-btn"
                                                                             onClick={() => {
-                                                                                setSelectedImages(prev => 
+                                                                                setSelectedImages(prev =>
                                                                                     prev.filter((_, i) => i !== index)
                                                                                 );
                                                                             }}
@@ -854,17 +918,17 @@ const ProductManagement = () => {
                             </div>
                         </>
                     ) : activeManagementTab === 'brand' ? (
-                        <BrandManagement 
-                            onBrandCreated={refreshData} 
+                        <BrandManagement
+                            onBrandCreated={refreshData}
                         />
                     ) : activeManagementTab === 'category' ? (
-                        <CategoryManagement 
-                         onCategoryCreated={refreshData} 
+                        <CategoryManagement
+                            onCategoryCreated={refreshData}
                         />
                     ) : (
-                        <SubcategoryManagement  
-                            categories={allCategories} 
-                            onSubcategoryCreated={refreshData} 
+                        <SubcategoryManagement
+                            categories={allCategories}
+                            onSubcategoryCreated={refreshData}
                         />
                     )}
                 </div>
