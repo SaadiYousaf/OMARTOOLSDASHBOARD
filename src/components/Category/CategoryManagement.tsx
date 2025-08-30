@@ -6,6 +6,14 @@ interface CategoryManagementProps {
     onCategoryCreated: () => void;
 }
 
+interface CategoryImage {
+    id: string;
+    imageUrl: string;
+    altText: string;
+    displayOrder: number;
+    isPrimary: boolean;
+}
+
 const CategoryManagement: React.FC<CategoryManagementProps> = ({
     onCategoryCreated
 }) => {
@@ -26,11 +34,10 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         imageUrl: '',
         displayOrder: 0,
         isActive: true,
-//        createdAt: new Date().toISOString(),
-//        updatedAt: undefined
     });
 
     const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
+    const [categoryImages, setCategoryImages] = useState<CategoryImage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -58,6 +65,21 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
             }
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // ===============================
+    // FETCH CATEGORY IMAGES
+    // ===============================
+    const fetchCategoryImages = async (categoryId: string) => {
+        try {
+            const res = await fetch(`http://localhost:5117/api/categories/${categoryId}/images`);
+            if (!res.ok) throw new Error('Failed to fetch category images');
+            
+            const data = await res.json();
+            setCategoryImages(data);
+        } catch (err) {
+            console.error('Failed to fetch category images', err);
         }
     };
 
@@ -112,6 +134,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         return () => controller.abort();
     }, []);
 
+    // Fetch images when editing a category
+    useEffect(() => {
+        if (editingCategory) {
+            fetchCategoryImages(editingCategory.id);
+        } else {
+            setCategoryImages([]);
+        }
+    }, [editingCategory]);
+
     // ===============================
     // FORM HANDLING
     // ===============================
@@ -141,10 +172,80 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     const validateCategory = (category: Omit<CategoryDto, 'id'> | CategoryDto) => {
         if (!category.name.trim()) return 'Name is required';
         if (!category.description?.trim()) return 'Description is required';
-        if (!category.imageUrl.trim()) return 'Image URL is required';
-        // if (!category.imageUrl.startsWith('http')) return 'Image URL must be a valid URL';
         if (category.displayOrder < 0) return 'Display order must be non-negative';
         return null;
+    };
+
+    // ===============================
+    // IMAGE HANDLING
+    // ===============================
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, categoryId: string) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setIsLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        const formData = new FormData();
+        formData.append('file', e.target.files[0]);
+        formData.append('categoryId', categoryId);
+        formData.append('altText', 'Category image');
+        formData.append('isPrimary', 'true');
+
+        try {
+            const response = await fetch('http://localhost:5117/api/categories/images', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setSuccess('Image uploaded successfully');
+                // Refresh category images
+                if (editingCategory) {
+                    fetchCategoryImages(editingCategory.id);
+                }
+            } else {
+                setError(data.message || 'Failed to upload image');
+            }
+        } catch (err) {
+            setError('Failed to upload image');
+        } finally {
+            setIsLoading(false);
+            // Reset the file input
+            e.target.value = '';
+        }
+    };
+
+    const handleDeleteImage = async (imageId: string) => {
+        if (!window.confirm('Are you sure you want to delete this image?')) return;
+
+        setIsLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const response = await fetch(`http://localhost:5117/api/categories/images/${imageId}`, {
+                method: 'DELETE',
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setSuccess('Image deleted successfully');
+                // Refresh category images
+                if (editingCategory) {
+                    fetchCategoryImages(editingCategory.id);
+                }
+            } else {
+                setError(data.message || 'Failed to delete image');
+            }
+        } catch (err) {
+            setError('Failed to delete image');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // ===============================
@@ -152,18 +253,18 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     // ===============================
     const handleCreateCategory = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validate before submission
         const validationError = validateCategory(newCategory);
         if (validationError) {
             setError(validationError);
             return;
         }
-    
+
         setIsLoading(true);
         setError(null);
         setSuccess(null);
-    
+
         try {
             // Convert to PascalCase for backend
             const requestBody = {
@@ -173,18 +274,18 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                 DisplayOrder: newCategory.displayOrder,
                 IsActive: newCategory.isActive
             };
-    
+
             const res = await fetch('http://localhost:5117/api/categories', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
             });
-    
+
             if (!res.ok) {
                 const errorData = await res.json();
                 throw new Error(errorData.message || 'Failed to create category');
             }
-    
+
             setSuccess('Category created successfully');
             resetForm();
             fetchCategories();
@@ -195,22 +296,22 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
             setIsLoading(false);
         }
     };
-    
+
     const handleUpdateCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingCategory) return;
-        
+
         // Validate before submission
         const validationError = validateCategory(editingCategory);
         if (validationError) {
             setError(validationError);
             return;
         }
-    
+
         setIsLoading(true);
         setError(null);
         setSuccess(null);
-    
+
         try {
             // Convert to PascalCase for backend
             const requestBody = {
@@ -220,18 +321,18 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                 DisplayOrder: editingCategory.displayOrder,
                 IsActive: editingCategory.isActive
             };
-    
+
             const res = await fetch(`http://localhost:5117/api/categories/${editingCategory.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
             });
-    
+
             if (!res.ok) {
                 const errorData = await res.json();
                 throw new Error(errorData.message || 'Failed to update category');
             }
-    
+
             setSuccess('Category updated successfully');
             setEditingCategory(null);
             fetchCategories();
@@ -241,7 +342,6 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
             setIsLoading(false);
         }
     };
-    
 
     const handleDeleteCategory = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this category?')) return;
@@ -417,30 +517,6 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                                 />
                             </div>
 
-                            {/* IMAGE */}
-                            <div className="form-group">
-                                <label htmlFor="imageUrl">Image URL *</label>
-                                <input
-                                    type="text"
-                                    id="imageUrl"
-                                    name="imageUrl"
-                                    value={editingCategory ? editingCategory.imageUrl : newCategory.imageUrl}
-                                    onChange={handleInputChange}
-                                    placeholder="https://example.com/image.jpg"
-                                    required
-                                />
-                                {(editingCategory?.imageUrl || newCategory.imageUrl) && (
-                                    <div className="image-preview">
-                                        <img
-                                            src={editingCategory ? editingCategory.imageUrl : newCategory.imageUrl}
-                                            alt="Preview"
-                                            onError={(e) => e.currentTarget.style.display = 'none'}
-                                        />
-                                        <span>Image Preview</span>
-                                    </div>
-                                )}
-                            </div>
-
                             {/* DISPLAY ORDER & ACTIVE */}
                             <div className="form-row">
                                 <div className="form-group">
@@ -470,6 +546,44 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                                     </label>
                                 </div>
                             </div>
+
+                            {/* IMAGE UPLOAD (only when editing) */}
+                            {editingCategory && (
+                                <div className="form-group">
+                                    <label>Category Images</label>
+                                    <div className="image-upload-section">
+                                        <label className="file-upload-btn">
+                                            Upload Image
+                                            <input
+                                                type="file"
+                                                onChange={(e) => handleImageUpload(e, editingCategory.id)}
+                                                accept="image/*"
+                                            />
+                                        </label>
+                                        
+                                        {categoryImages.length > 0 && (
+                                            <div className="image-preview-list">
+                                                <h4>Current Images</h4>
+                                                <div className="image-list">
+                                                    {categoryImages.map((image) => (
+                                                        <div key={image.id} className="image-item">
+                                                            <img src={image.imageUrl} alt={image.altText} />
+                                                            <button
+                                                                type="button"
+                                                                className="delete-image-btn"
+                                                                onClick={() => handleDeleteImage(image.id)}
+                                                                disabled={isLoading}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* BUTTONS */}
                             <div className="form-footer">

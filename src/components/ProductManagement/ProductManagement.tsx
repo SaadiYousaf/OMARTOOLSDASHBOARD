@@ -4,10 +4,15 @@ import { Product, BrandDto, SubcategoryDto, CategoryDto, ProductImage } from '..
 import BrandManagement from '../Brands/BrandManagement';
 import CategoryManagement from '../Category/CategoryManagement';
 import SubcategoryManagement from '../Subcategory/SubcategoryManagement';
-import { FiPlus, FiEdit, FiTrash2, FiX, FiCheck, FiUpload, FiHome, FiTag, FiLayers, FiGrid, FiDollarSign, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiX, FiCheck, FiUpload, FiHome, FiTag, FiLayers, FiGrid, FiDollarSign, FiSearch } from 'react-icons/fi';
 import DashboardSidebar from './DasboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import StatsCard from './StatsCard';
+import {
+    FiBox, FiTruck, FiCheckCircle, FiXCircle,
+    FiFilter, FiRefreshCw, FiEye,
+    FiEdit, FiArrowLeft, FiArrowRight
+} from 'react-icons/fi'
 
 const ProductManagement = () => {
 
@@ -30,6 +35,9 @@ const ProductManagement = () => {
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
     const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(3);
+
 
     // Status indicators
     const [isLoading, setIsLoading] = useState(false);
@@ -114,7 +122,7 @@ const ProductManagement = () => {
     // Filter products based on search term and featured filter
     useEffect(() => {
         let results = products;
-        
+
         if (searchTerm) {
             results = results.filter(product =>
                 product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,6 +138,13 @@ const ProductManagement = () => {
 
         setFilteredProducts(results);
     }, [searchTerm, showFeaturedOnly, products]);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+    // Pagination function
+    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
     // Main data fetching function
     const fetchInitialData = async () => {
@@ -584,7 +599,7 @@ const ProductManagement = () => {
                                                                 <td>${product.price?.toFixed(2)}</td>
                                                                 <td>
                                                                     <span className={`stock-badge ${product.stockQuantity > 10 ? 'in-stock' :
-                                                                            product.stockQuantity > 0 ? 'low-stock' : 'out-of-stock'
+                                                                        product.stockQuantity > 0 ? 'low-stock' : 'out-of-stock'
                                                                         }`}>
                                                                         {product.stockQuantity}
                                                                     </span>
@@ -627,6 +642,139 @@ const ProductManagement = () => {
                                                     )}
                                                 </tbody>
                                             </table>
+                                            {totalPages > 0 && (
+                                                <div className="pagination-container">
+                                                    <div className="pagination-info">
+                                                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredProducts.length)} of {filteredProducts.length} products
+                                                    </div>
+
+                                                    <div className="pagination-controls">
+                                                        <div className="pagination-buttons">
+                                                            <button
+                                                                onClick={() => paginate(1)}
+                                                                disabled={currentPage === 1}
+                                                                className="pagination-edge"
+                                                                title="First Page"
+                                                            >
+                                                                <FiArrowLeft /><FiArrowLeft />
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() => paginate(currentPage - 1)}
+                                                                disabled={currentPage === 1}
+                                                                className="pagination-nav"
+                                                            >
+                                                                <FiArrowLeft /> Previous
+                                                            </button>
+
+                                                            {/* Page number buttons with ellipsis for large number of pages */}
+                                                            {(() => {
+                                                                const pageButtons = [];
+                                                                const maxVisiblePages = 5;
+                                                                let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                                                                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                                                                // Adjust if we're near the end
+                                                                if (endPage - startPage + 1 < maxVisiblePages) {
+                                                                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                                                                }
+
+                                                                // First page and ellipsis if needed
+                                                                if (startPage > 1) {
+                                                                    pageButtons.push(
+                                                                        <button
+                                                                            key={1}
+                                                                            onClick={() => paginate(1)}
+                                                                            className={currentPage === 1 ? 'active' : ''}
+                                                                        >
+                                                                            1
+                                                                        </button>
+                                                                    );
+
+                                                                    if (startPage > 2) {
+                                                                        pageButtons.push(
+                                                                            <span key="start-ellipsis" className="pagination-ellipsis">
+                                                                                ...
+                                                                            </span>
+                                                                        );
+                                                                    }
+                                                                }
+
+                                                                // Page number buttons
+                                                                for (let i = startPage; i <= endPage; i++) {
+                                                                    pageButtons.push(
+                                                                        <button
+                                                                            key={i}
+                                                                            onClick={() => paginate(i)}
+                                                                            className={currentPage === i ? 'active' : ''}
+                                                                        >
+                                                                            {i}
+                                                                        </button>
+                                                                    );
+                                                                }
+
+                                                                // Last page and ellipsis if needed
+                                                                if (endPage < totalPages) {
+                                                                    if (endPage < totalPages - 1) {
+                                                                        pageButtons.push(
+                                                                            <span key="end-ellipsis" className="pagination-ellipsis">
+                                                                                ...
+                                                                            </span>
+                                                                        );
+                                                                    }
+
+                                                                    pageButtons.push(
+                                                                        <button
+                                                                            key={totalPages}
+                                                                            onClick={() => paginate(totalPages)}
+                                                                            className={currentPage === totalPages ? 'active' : ''}
+                                                                        >
+                                                                            {totalPages}
+                                                                        </button>
+                                                                    );
+                                                                }
+
+                                                                return pageButtons;
+                                                            })()}
+
+                                                            <button
+                                                                onClick={() => paginate(currentPage + 1)}
+                                                                disabled={currentPage === totalPages}
+                                                                className="pagination-nav"
+                                                            >
+                                                                Next <FiArrowRight />
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() => paginate(totalPages)}
+                                                                disabled={currentPage === totalPages}
+                                                                className="pagination-edge"
+                                                                title="Last Page"
+                                                            >
+                                                                <FiArrowRight /><FiArrowRight />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="pagination-page-size">
+                                                            <label>Items per page:</label>
+                                                            <select
+                                                                value={itemsPerPage}
+                                                                onChange={(e) => {
+                                                                    setItemsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1); // Reset to first page when changing page size
+                                                                }}
+                                                            >
+                                                                <option value="5">5</option>
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                         </div>
                                     ) : (
                                         <form onSubmit={handleSubmit} className="product-form">

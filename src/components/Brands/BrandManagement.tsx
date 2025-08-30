@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './BrandManagement.css'
+import './BrandManagement.css';
 
 // Define types based on the backend controller
 interface CategoryDto {
@@ -26,6 +26,14 @@ interface ProductDto {
   price: number;
 }
 
+interface BrandImage {
+  id: string;
+  imageUrl: string;
+  altText: string;
+  displayOrder: number;
+  isPrimary: boolean;
+}
+
 const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => {
   const [brands, setBrands] = useState<BrandDto[]>([]);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
@@ -42,7 +50,9 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     createdAt: new Date().toISOString()
   });
 
+  const [brandImages, setBrandImages] = useState<BrandImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isFetchingCategories, setIsFetchingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +108,92 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
       setError(`Failed to load products for brand ${brandId}`);
     }
   };
+
+  const fetchBrandImages = async (brandId: string) => {
+    try {
+      const res = await fetch(`http://localhost:5117/api/brands/${brandId}/images`);
+      if (!res.ok) throw new Error('Failed to fetch brand images');
+      const data = await res.json();
+      setBrandImages(data);
+    } catch (err) {
+      setError('Failed to load brand images');
+      console.error(err);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, brandId: string) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    setIsImageLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('file', e.target.files[0]);
+    formData.append('brandId', brandId);
+    formData.append('altText', 'Brand image');
+    formData.append('isPrimary', 'true');
+
+    try {
+      const response = await fetch('http://localhost:5117/api/brands/images', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Refresh brand images
+        if (isEditing) {
+          fetchBrandImages(brandId);
+        }
+        setSuccess('Image uploaded successfully!');
+      } else {
+        setError(data.message || 'Failed to upload image');
+      }
+    } catch (err) {
+      setError('Failed to upload image');
+    } finally {
+      setIsImageLoading(false);
+      e.target.value = ''; // Reset file input
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    if (!window.confirm('Are you sure you want to delete this image?')) return;
+
+    setIsImageLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`http://localhost:5117/api/brands/images/${imageId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Refresh brand images
+        if (isEditing && brandForm.id) {
+          fetchBrandImages(brandForm.id);
+        }
+        setSuccess('Image deleted successfully!');
+      } else {
+        setError(data.message || 'Failed to delete image');
+      }
+    } catch (err) {
+      setError('Failed to delete image');
+    } finally {
+      setIsImageLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing && brandForm.id) {
+      fetchBrandImages(brandForm.id);
+    } else {
+      setBrandImages([]);
+    }
+  }, [isEditing, brandForm.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,6 +296,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
       createdAt: new Date().toISOString()
     });
     setIsEditing(false);
+    setBrandImages([]);
   };
 
   const handleCategoryChange = (categoryId: string) => {
@@ -380,6 +477,45 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
                         className="large-textarea"
                       />
                     </div>
+
+                    {/* Image upload section */}
+                    {isEditing && (
+                      <div className="form-group full-width">
+                        <label>Brand Images</label>
+                        <div className="image-upload-section">
+                          <label className="file-upload-btn">
+                            {isImageLoading ? 'Uploading...' : 'Upload Image'}
+                            <input
+                              type="file"
+                              onChange={(e) => handleImageUpload(e, brandForm.id)}
+                              accept="image/*"
+                              disabled={isImageLoading}
+                            />
+                          </label>
+                          
+                          {brandImages.length > 0 && (
+                            <div className="image-preview-list">
+                              <h4>Current Images</h4>
+                              <div className="image-list">
+                                {brandImages.map((image) => (
+                                  <div key={image.id} className="image-item">
+                                    <img src={image.imageUrl} alt={image.altText} />
+                                    <button
+                                      type="button"
+                                      className="delete-image-btn"
+                                      onClick={() => handleDeleteImage(image.id)}
+                                      disabled={isImageLoading}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-actions">
