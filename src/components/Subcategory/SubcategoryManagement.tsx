@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SubcategoryDto, CategoryDto } from '../../types/product';
 import './SubcategoryManagement.css';
-
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
 interface SubcategoryImage {
   id: string;
   imageUrl: string;
@@ -41,7 +41,7 @@ const SubcategoryManagement = ({
 
   const fetchSubcategories = async () => {
     try {
-      const res = await fetch('http://localhost:5117/api/subcategories');
+      const res = await fetch(`${API_BASE_URL}/subcategories`);
       if (!res.ok) throw new Error('Failed to fetch subcategories');
       const data = await res.json();
       setSubcategories(data);
@@ -53,7 +53,7 @@ const SubcategoryManagement = ({
 
   const fetchSubcategoryImages = async (subcategoryId: string) => {
     try {
-      const res = await fetch(`http://localhost:5117/api/subcategories/${subcategoryId}/images`);
+      const res = await fetch(`${API_BASE_URL}/subcategories/${subcategoryId}/images`);
       if (!res.ok) throw new Error('Failed to fetch subcategory images');
       
       const data = await res.json();
@@ -76,7 +76,7 @@ const SubcategoryManagement = ({
     formData.append('isPrimary', 'true');
 
     try {
-      const response = await fetch('http://localhost:5117/api/subcategories/images', {
+      const response = await fetch(`${API_BASE_URL}/subcategories/images`, {
         method: 'POST',
         body: formData,
       });
@@ -106,7 +106,7 @@ const SubcategoryManagement = ({
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:5117/api/subcategories/images/${imageId}`, {
+      const response = await fetch(`${API_BASE_URL}/subcategories/images/${imageId}`, {
         method: 'DELETE',
       });
 
@@ -142,8 +142,8 @@ const SubcategoryManagement = ({
 
     try {
       const url = editingId
-        ? `http://localhost:5117/api/subcategories/${editingId}`
-        : 'http://localhost:5117/api/subcategories';
+        ? `${API_BASE_URL}/subcategories/${editingId}`
+        : `${API_BASE_URL}/subcategories`;
 
       const method = editingId ? 'PUT' : 'POST';
 
@@ -221,7 +221,7 @@ const SubcategoryManagement = ({
     setError(null);
 
     try {
-      const res = await fetch(`http://localhost:5117/api/subcategories/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/subcategories/${id}`, {
         method: 'DELETE',
       });
 
@@ -248,7 +248,7 @@ const SubcategoryManagement = ({
         isActive: !subcategory.isActive,
       };
 
-      const res = await fetch(`http://localhost:5117/api/subcategories/${subcategory.id}`, {
+      const res = await fetch(`${API_BASE_URL}/subcategories/${subcategory.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedSubcategory),

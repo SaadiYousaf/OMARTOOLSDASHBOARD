@@ -13,7 +13,7 @@ import {
     FiFilter, FiRefreshCw, FiEye,
     FiEdit, FiArrowLeft, FiArrowRight
 } from 'react-icons/fi'
-
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
 const ProductManagement = () => {
 
     // State for all data entities
@@ -151,10 +151,10 @@ const ProductManagement = () => {
         setIsLoading(true);
         try {
             const [brandsRes, categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
-                fetch('http://localhost:5117/api/brands'),
-                fetch('http://localhost:5117/api/categories'),
-                fetch('http://localhost:5117/api/subcategories'),
-                activeManagementTab === 'product' ? fetch('http://localhost:5117/api/products') : Promise.resolve(null)
+                fetch(`${API_BASE_URL}/brands`),
+                fetch(`${API_BASE_URL}categories`),
+                fetch(`${API_BASE_URL}/subcategories`),
+                activeManagementTab === 'product' ? fetch(`${API_BASE_URL}/products`) : Promise.resolve(null)
             ]);
 
             // Handle brands response
@@ -263,7 +263,7 @@ const ProductManagement = () => {
             formData.append('altText', currentProduct?.name || 'Product Image');
             formData.append('isPrimary', index === 0 ? 'true' : 'false');
 
-            const response = await fetch('http://localhost:5117/api/products/images', {
+            const response = await fetch(`${API_BASE_URL}/products/images`, {
                 method: 'POST',
                 body: formData,
             });
@@ -296,8 +296,8 @@ const ProductManagement = () => {
         try {
             const method = currentProduct.id ? 'PUT' : 'POST';
             const url = currentProduct.id
-                ? `http://localhost:5117/api/products/${currentProduct.id}`
-                : 'http://localhost:5117/api/products';
+                ? `${API_BASE_URL}/products/${currentProduct.id}`
+                : `${API_BASE_URL}/products`;
 
             // Ensure all required fields are included
             const productData = {
@@ -361,7 +361,7 @@ const ProductManagement = () => {
 
         setIsLoading(true);
         try {
-            const res = await fetch(`http://localhost:5117/api/products/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/products/${id}`, {
                 method: 'DELETE',
             });
 

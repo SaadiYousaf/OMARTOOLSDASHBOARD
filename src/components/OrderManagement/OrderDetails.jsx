@@ -26,7 +26,7 @@ const OrderManagement = () => {
       // In a real implementation, we would call an admin endpoint to get all orders
       // Since we don't have one, we'll simulate with the user endpoint for demo
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5117/api/orders/user', {
+      const response = await fetch(`${API_BASE_URL}/orders/user`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -78,7 +78,7 @@ const OrderManagement = () => {
       const token = localStorage.getItem('adminToken');
       
       // We'll use the existing refund endpoint pattern to update status
-      const response = await fetch(`http://localhost:5117/api/orders/${orderId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
