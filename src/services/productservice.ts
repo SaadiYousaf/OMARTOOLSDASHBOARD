@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:511
 export class ProductService implements IProductService {
   async getAllProducts(): Promise<Product[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products`);
+      const response = await fetch(`${API_BASE_URL}/products`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -45,10 +45,11 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     // ===============================
     // FETCH CATEGORIES
     // ===============================
+    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL 
     const fetchCategories = async (signal?: AbortSignal) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`http://localhost:5117/api/categories`, { signal });
+            const res = await fetch(`${API_BASE_URL}/categories`, { signal });
             if (!res.ok) throw new Error('Failed to fetch categories');
 
             const data = await res.json();
@@ -73,7 +74,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     // ===============================
     const fetchCategoryImages = async (categoryId: string) => {
         try {
-            const res = await fetch(`http://localhost:5117/api/categories/${categoryId}/images`);
+            const res = await fetch(`${API_BASE_URL}/categories/${categoryId}/images`);
             if (!res.ok) throw new Error('Failed to fetch category images');
             
             const data = await res.json();
@@ -193,7 +194,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         formData.append('isPrimary', 'true');
 
         try {
-            const response = await fetch('http://localhost:5117/api/categories/images', {
+            const response = await fetch(`${API_BASE_URL}/categories/images`, {
                 method: 'POST',
                 body: formData,
             });
@@ -226,7 +227,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         setSuccess(null);
 
         try {
-            const response = await fetch(`http://localhost:5117/api/categories/images/${imageId}`, {
+            const response = await fetch(`${API_BASE_URL}/categories/images/${imageId}`, {
                 method: 'DELETE',
             });
 
@@ -275,7 +276,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                 IsActive: newCategory.isActive
             };
 
-            const res = await fetch('http://localhost:5117/api/categories', {
+            const res = await fetch(`${API_BASE_URL}/categories`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
@@ -322,7 +323,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                 IsActive: editingCategory.isActive
             };
 
-            const res = await fetch(`http://localhost:5117/api/categories/${editingCategory.id}`, {
+            const res = await fetch(`${API_BASE_URL}/categories/${editingCategory.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
@@ -351,7 +352,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         setSuccess(null);
 
         try {
-            const res = await fetch(`http://localhost:5117/api/categories/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
                 method: 'DELETE'
             });
 
@@ -375,7 +376,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         setSuccess(null);
 
         try {
-            const res = await fetch(`http://localhost:5117/api/categories/${id}/status`, {
+            const res = await fetch(`${API_BASE_URL}/categories/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isActive: !currentStatus })

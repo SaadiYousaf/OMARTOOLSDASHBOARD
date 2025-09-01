@@ -68,11 +68,11 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     fetchBrands();
     fetchCategories();
   }, []);
-
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL 
   const fetchBrands = async () => {
     setIsFetching(true);
     try {
-      const res = await fetch('http://localhost:5117/api/brands');
+      const res = await fetch(`${API_BASE_URL}/brands`);
       if (!res.ok) throw new Error('Failed to fetch brands');
       const data = await res.json();
       setBrands(data);
@@ -87,7 +87,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     setIsFetchingCategories(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:5117/api/categories');
+      const res = await fetch(`${API_BASE_URL}/categories`);
       if (!res.ok) throw new Error('Failed to fetch categories');
       const data = await res.json();
       setCategories(data);
@@ -100,7 +100,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
 
   const fetchProductsByBrand = async (brandId: string) => {
     try {
-      const res = await fetch(`http://localhost:5117/api/brands/${brandId}/products`);
+      const res = await fetch(`${API_BASE_URL}/brands/${brandId}/products`);
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(prev => ({ ...prev, [brandId]: data }));
@@ -111,7 +111,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
 
   const fetchBrandImages = async (brandId: string) => {
     try {
-      const res = await fetch(`http://localhost:5117/api/brands/${brandId}/images`);
+      const res = await fetch(`${API_BASE_URL}/brands/${brandId}/images`);
       if (!res.ok) throw new Error('Failed to fetch brand images');
       const data = await res.json();
       setBrandImages(data);
@@ -134,7 +134,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     formData.append('isPrimary', 'true');
 
     try {
-      const response = await fetch('http://localhost:5117/api/brands/images', {
+      const response = await fetch(`${API_BASE_URL}/brands/images`, {
         method: 'POST',
         body: formData,
       });
@@ -165,7 +165,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:5117/api/brands/images/${imageId}`, {
+      const response = await fetch(`${API_BASE_URL}/brands/images/${imageId}`, {
         method: 'DELETE',
       });
 
@@ -215,11 +215,11 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
     }
 
     try {
-      let url = 'http://localhost:5117/api/brands';
+      let url = `${API_BASE_URL}/brands`;
       let method = 'POST';
 
       if (isEditing) {
-        url = `http://localhost:5117/api/brands/${brandForm.id}`;
+        url = `${API_BASE_URL}/brands/${brandForm.id}`;
         method = 'PUT';
       }
 
@@ -259,7 +259,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
 
     try {
       // Check if brand has products
-      const productsRes = await fetch(`http://localhost:5117/api/brands/${id}/products`);
+      const productsRes = await fetch(`${API_BASE_URL}/brands/${id}/products`);
       if (!productsRes.ok) throw new Error('Failed to check products');
       
       const productsData = await productsRes.json();
@@ -269,7 +269,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
       }
 
       // Delete brand
-      const res = await fetch(`http://localhost:5117/api/brands/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/brands/${id}`, {
         method: 'DELETE'
       });
 

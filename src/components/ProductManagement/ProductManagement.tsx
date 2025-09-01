@@ -14,6 +14,7 @@ import {
     FiEdit, FiArrowLeft, FiArrowRight
 } from 'react-icons/fi'
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
+const API_BASE_IMG_URL =process.env.REACT_APP_BASE_IMG_URL
 const ProductManagement = () => {
 
     // State for all data entities
@@ -152,7 +153,7 @@ const ProductManagement = () => {
         try {
             const [brandsRes, categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/brands`),
-                fetch(`${API_BASE_URL}categories`),
+                fetch(`${API_BASE_URL}/categories`),
                 fetch(`${API_BASE_URL}/subcategories`),
                 activeManagementTab === 'product' ? fetch(`${API_BASE_URL}/products`) : Promise.resolve(null)
             ]);
@@ -579,7 +580,7 @@ const ProductManagement = () => {
                                                                 <td>
                                                                     {product.images?.[0]?.imageUrl ? (
                                                                         <img
-                                                                            src={product.images[0].imageUrl}
+                                                                            src={API_BASE_IMG_URL + product.images[0].imageUrl}
                                                                             alt={product.name}
                                                                             className="product-thumbnail"
                                                                         />

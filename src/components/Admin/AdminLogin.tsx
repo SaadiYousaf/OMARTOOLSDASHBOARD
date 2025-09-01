@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { FiLock, FiMail, FiAlertCircle } from 'react-icons/fi';
 import './AdminLogin.css';
-
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL 
 interface AdminLoginProps {
   onLoginSuccess: () => void;
 }
@@ -60,7 +60,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5117/api/auth/login', {
+      const response = await fetch( `${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

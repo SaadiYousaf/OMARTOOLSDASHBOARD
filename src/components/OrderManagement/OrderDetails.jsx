@@ -6,7 +6,7 @@ import {
   FiEdit, FiArrowLeft, FiArrowRight
 } from 'react-icons/fi';
 import './OrderManagement.css';
-
+    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
