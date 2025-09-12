@@ -350,14 +350,13 @@ const SubcategoryManagement = ({
               </div>
 
               <div className="form-group">
-                <label htmlFor="description">Description *</label>
+                <label htmlFor="description">Description</label>
                 <textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder="Enter subcategory description"
-                  required
                   rows={3}
                 />
               </div>
