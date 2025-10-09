@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import './ProductManagement.css';
 import { Product, BrandDto, SubcategoryDto, CategoryDto, ProductImage } from '../../types/product';
 import BrandManagement from '../Brands/BrandManagement';
@@ -14,6 +14,7 @@ import {
     FiEdit, FiArrowLeft, FiArrowRight
 } from 'react-icons/fi'
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
+const API_BASE_IMG_URL =process.env.REACT_APP_BASE_IMG_URL
 const ProductManagement = () => {
 
     // State for all data entities
@@ -56,7 +57,24 @@ const ProductManagement = () => {
     // Search and filter state
     const [searchTerm, setSearchTerm] = useState('');
     const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const filteredProducts = useMemo(() => {
+        let results = products;
+
+        if (searchTerm) {
+            results = results.filter(product =>
+                product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (product.tagLine && product.tagLine.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        }
+
+        if (showFeaturedOnly) {
+            results = results.filter(product => product.isFeatured);
+        }
+
+        return results;
+    }, [searchTerm, showFeaturedOnly, products]);
 
     // Fetch all initial data
     useEffect(() => {
@@ -136,15 +154,30 @@ const ProductManagement = () => {
             results = results.filter(product => product.isFeatured);
         }
 
-        setFilteredProducts(results);
+       // setFilteredProducts(results);
     }, [searchTerm, showFeaturedOnly, products]);
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const currentProducts = useMemo(() => {
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        return filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+    }, [currentPage, itemsPerPage, filteredProducts]);
+
+    const totalPages = useMemo(() => {
+        return Math.ceil(filteredProducts.length / itemsPerPage);
+    }, [filteredProducts.length, itemsPerPage]);
 
     // Pagination function
-    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, showFeaturedOnly]);
+    const paginate = (pageNumber: number) => {
+        if (pageNumber >= 1 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+        }
+    };
+
 
     // Main data fetching function
     const fetchInitialData = async () => {
@@ -152,7 +185,7 @@ const ProductManagement = () => {
         try {
             const [brandsRes, categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/brands`),
-                fetch(`${API_BASE_URL}categories`),
+                fetch(`${API_BASE_URL}/categories`),
                 fetch(`${API_BASE_URL}/subcategories`),
                 activeManagementTab === 'product' ? fetch(`${API_BASE_URL}/products`) : Promise.resolve(null)
             ]);
@@ -177,7 +210,7 @@ const ProductManagement = () => {
                 const productsData = await productsRes.json();
                 // Ensure products is always an array
                 setProducts(Array.isArray(productsData) ? productsData : []);
-                setFilteredProducts(Array.isArray(productsData) ? productsData : []);
+              //  setFilteredProducts(Array.isArray(productsData) ? productsData : []);
             }
         } catch (err) {
             setError('Failed to load initial data');
@@ -188,7 +221,7 @@ const ProductManagement = () => {
             setSubcategories([]);
             setFilteredSubcategories([]);
             setProducts([]);
-            setFilteredProducts([]);
+            //setFilteredProducts([]);
         } finally {
             setIsLoading(false);
         }
@@ -573,13 +606,13 @@ const ProductManagement = () => {
                                                             </td>
                                                         </tr>
                                                     ) : (
-                                                        filteredProducts.map((product) => (
+                                                        currentProducts.map((product) => (
                                                             <tr key={product.id}>
                                                                 <td>{product.id}</td>
                                                                 <td>
                                                                     {product.images?.[0]?.imageUrl ? (
                                                                         <img
-                                                                            src={product.images[0].imageUrl}
+                                                                            src={API_BASE_IMG_URL + product.images[0].imageUrl}
                                                                             alt={product.name}
                                                                             className="product-thumbnail"
                                                                         />
@@ -645,7 +678,7 @@ const ProductManagement = () => {
                                             {totalPages > 0 && (
                                                 <div className="pagination-container">
                                                     <div className="pagination-info">
-                                                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredProducts.length)} of {filteredProducts.length} products
+                                                        Showing {Math.min(indexOfFirstItem + 1, filteredProducts.length)} to {Math.min(indexOfLastItem, filteredProducts.length)} of {filteredProducts.length} products
                                                     </div>
 
                                                     <div className="pagination-controls">
@@ -764,17 +797,16 @@ const ProductManagement = () => {
                                                                     setCurrentPage(1); // Reset to first page when changing page size
                                                                 }}
                                                             >
+                                                                <option value="3">3</option>
                                                                 <option value="5">5</option>
                                                                 <option value="10">10</option>
                                                                 <option value="25">25</option>
                                                                 <option value="50">50</option>
-                                                                <option value="100">100</option>
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             )}
-
                                         </div>
                                     ) : (
                                         <form onSubmit={handleSubmit} className="product-form">
