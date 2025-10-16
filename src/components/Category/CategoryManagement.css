@@ -6,14 +6,29 @@
     margin: 0 auto;
     padding: 20px;
 }
-
-.dashboard-header {
+.dashboard-header-c {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
     flex-wrap: wrap;
     gap: 20px;
+
+    background: #fff;       
+    padding: 20px;             
+    border-radius: 10px;       
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
+    margin-bottom: 30px;
+}
+.header-content-c h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0;
+    color: #2c3e50;
+}
+
+.header-content-c p {
+    margin: 5px 0 0;
+    color: #7f8c8d;
 }
 /* Image Upload Styles */
 .image-upload-section {
@@ -114,9 +129,17 @@
 }
 
 .stat-item {
-    text-align: center;
-    padding: 0 15px;
-    border-right: 1px solid #eee;
+   width: 100px;
+  height: 100px;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-item:last-child {
@@ -280,11 +303,12 @@
 }
 
 /* Pagination controls */
-.pagination-controls {
+.pagination-controls-c {
     display: flex;
     justify-content: center;
     gap: 5px;
     margin-top: 20px;
+     margin-top: 10px;
     flex-wrap: wrap;
 }
 

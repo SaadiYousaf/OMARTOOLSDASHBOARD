@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SubcategoryDto, CategoryDto } from '../../types/product';
 import './SubcategoryManagement.css';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
+const API_BASE_IMG_URL =process.env.REACT_APP_BASE_IMG_URL
 interface SubcategoryImage {
   id: string;
   imageUrl: string;
@@ -9,6 +10,7 @@ interface SubcategoryImage {
   displayOrder: number;
   isPrimary: boolean;
 }
+
 
 const SubcategoryManagement = ({
   categories,
@@ -34,11 +36,20 @@ const SubcategoryManagement = ({
   const [filterCategory, setFilterCategory] = useState('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<{ [key: string]: 'delete' | 'toggle' | 'update' | null }>({});
-
+const [tempImages, setTempImages] = useState<File[]>([]);
+const [currentPage, setCurrentPage] = useState(1);
+const [itemsPerPage] = useState(5); // You can adjust this number
   useEffect(() => {
     fetchSubcategories();
   }, []);
 
+  const handleImageUploadForNewSubcategory = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const newFiles = Array.from(e.target.files);
+    setTempImages(prev => [...prev, ...newFiles]);
+    e.target.value = ''; // Reset file input
+};
   const fetchSubcategories = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/subcategories`);
@@ -161,6 +172,12 @@ const SubcategoryManagement = ({
         const errorData = await res.json();
         throw new Error(errorData.message || `Failed to ${editingId ? 'update' : 'create'} subcategory`);
       }
+       const result = await res.json();
+    
+    // Upload images for new subcategory
+    if (!editingId && tempImages.length > 0 && result.id) {
+      await uploadImagesForNewSubcategory(result.id);
+    }
 
       // Reset form
       setFormData({
@@ -171,6 +188,7 @@ const SubcategoryManagement = ({
         displayOrder: 0,
         isActive: true,
       });
+      setTempImages([]); // Clear temp images
 
       await fetchSubcategories();
       onSubcategoryCreated();
@@ -185,6 +203,21 @@ const SubcategoryManagement = ({
       setIsLoading(false);
     }
   };
+  const uploadImagesForNewSubcategory = async (subcategoryId: string) => {
+  for (const image of tempImages) {
+    const formData = new FormData();
+    formData.append('file', image);
+    formData.append('subcategoryId', subcategoryId);
+    formData.append('altText', 'Subcategory image');
+    formData.append('isPrimary', 'true');
+
+    await fetch(`${API_BASE_URL}/subcategories/images`, {
+      method: 'POST',
+      body: formData,
+    });
+  }
+  setTempImages([]); // Clear temp images after upload
+};
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -269,6 +302,7 @@ const SubcategoryManagement = ({
 
   const cancelEdit = () => {
     setEditingId(null);
+     setTempImages([]); // Clear temp images
     setFormData({
       name: '',
       categoryId: categories[0]?.id || '',
@@ -289,14 +323,76 @@ const SubcategoryManagement = ({
     return matchesSearch && matchesCategory;
   });
 
+  // Pagination logic
+const indexOfLastItem = currentPage * itemsPerPage;
+const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+const currentSubcategories = filteredSubcategories.slice(indexOfFirstItem, indexOfLastItem);
+const totalPages = Math.ceil(filteredSubcategories.length / itemsPerPage);
+
+const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+// Reset to first page when filters change
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchTerm, filterCategory]);
+
+// Pagination component
+const renderPagination = () => {
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  const maxPagesToShow = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+  let endPage = startPage + maxPagesToShow - 1;
+
+  if (endPage > totalPages) {
+    endPage = totalPages;
+    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(
+      <button
+        key={i}
+        onClick={() => paginate(i)}
+        className={`pagination-btn ${currentPage === i ? 'active' : ''}`}
+        disabled={currentPage === i}
+      >
+        {i}
+      </button>
+    );
+  }
+
+  return (
+    <div className="pagination-controls-s">
+      <button
+        className="pagination-btn"
+        onClick={() => paginate(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        Previous
+      </button>
+
+      {pages}
+
+      <button
+        className="pagination-btn"
+        onClick={() => paginate(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    </div>
+  );
+};
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-content">
+      <header className="dashboard-header-c">
+        <div className="header-content-c">
           <h1>Subcategory Management</h1>
           <p>Create and manage product subcategories</p>
         </div>
-        <div className="stats-card">
+        <div className="stats-grid">
           <div className="stat-item">
             <span>Total Subcategories</span>
             <strong>{subcategories.length}</strong>
@@ -361,43 +457,70 @@ const SubcategoryManagement = ({
                 />
               </div>
 
-              {/* Image upload section (only when editing) */}
-              {editingId && (
-                <div className="form-group">
-                  <label>Subcategory Images</label>
-                  <div className="image-upload-section">
-                    <label className="file-upload-btn">
-                      Upload Image
-                      <input
-                        type="file"
-                        onChange={(e) => handleImageUpload(e, editingId)}
-                        accept="image/*"
-                      />
-                    </label>
-                    
-                    {subcategoryImages.length > 0 && (
-                      <div className="image-preview-list">
-                        <h4>Current Images</h4>
-                        <div className="image-list">
-                          {subcategoryImages.map((image) => (
-                            <div key={image.id} className="image-item">
-                              <img src={image.imageUrl} alt={image.altText} />
-                              <button
-                                type="button"
-                                className="delete-image-btn"
-                                onClick={() => handleDeleteImage(image.id)}
-                                disabled={isLoading}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+<div className="form-group">
+  <label>Subcategory Images</label>
+  <div className="image-upload-section">
+    <label className="file-upload-btn">
+      Upload Image
+      <input
+        type="file"
+        onChange={(e) => {
+          if (editingId) {
+            handleImageUpload(e, editingId);
+          } else {
+            handleImageUploadForNewSubcategory(e);
+          }
+        }}
+        accept="image/*"
+      />
+    </label>
+    
+    {/* Show temporary images for new subcategories */}
+    {!editingId && tempImages.length > 0 && (
+      <div className="image-preview-list">
+        <h4>Images to Upload</h4>
+        <div className="image-list">
+          {tempImages.map((image, index) => (
+            <div key={index} className="image-item">
+              <img src={URL.createObjectURL(image)} alt={`Preview ${index + 1}`} />
+              <button
+                type="button"
+                className="delete-image-btn"
+                onClick={() => {
+                  setTempImages(prev => prev.filter((_, i) => i !== index));
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    {/* Show current images when editing */}
+    {editingId && subcategoryImages.length > 0 && (
+      <div className="image-preview-list">
+        <h4>Current Images</h4>
+        <div className="image-list">
+          {subcategoryImages.map((image) => (
+            <div key={image.id} className="image-item">
+              <img src={API_BASE_IMG_URL+image.imageUrl} alt={image.altText} />
+              <button
+                type="button"
+                className="delete-image-btn"
+                onClick={() => handleDeleteImage(image.id)}
+                disabled={isLoading}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
 
               <div className="form-row">
                 <div className="form-group">
@@ -487,112 +610,123 @@ const SubcategoryManagement = ({
           </div>
 
           <div className="subcategories-list">
-            {filteredSubcategories.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📂</div>
-                <h3>No subcategories found</h3>
-                <p>Create your first subcategory to get started</p>
+  {filteredSubcategories.length === 0 ? (
+    <div className="empty-state">
+      <div className="empty-icon">📂</div>
+      <h3>No subcategories found</h3>
+      <p>Create your first subcategory to get started</p>
+    </div>
+  ) : (
+    <>
+      <div className="subcategories-container">
+        {currentSubcategories.map((subcategory) => (
+          <div
+            key={subcategory.id}
+            className={`subcategory-card ${expandedSubcategoryId === subcategory.id ? 'expanded' : ''}`}
+          >
+            {/* ... existing subcategory card content ... */}
+            <div
+              className="subcategory-summary"
+              onClick={() => toggleSubcategoryDetails(subcategory.id)}
+            >
+              <div className="subcategory-image">
+                {subcategory.imageUrl ? (
+                  <img
+                    src={subcategory.imageUrl}
+                    alt={subcategory.name}
+                    onError={(e) => e.currentTarget.style.display = 'none'}
+                  />
+                ) : (
+                  <div className="image-placeholder">📷</div>
+                )}
               </div>
-            ) : (
-              <div className="subcategories-container">
-                {filteredSubcategories.map((subcategory) => (
-                  <div
-                    key={subcategory.id}
-                    className={`subcategory-card ${expandedSubcategoryId === subcategory.id ? 'expanded' : ''}`}
-                  >
-                    <div
-                      className="subcategory-summary"
-                      onClick={() => toggleSubcategoryDetails(subcategory.id)}
-                    >
-                      <div className="subcategory-image">
-                        {subcategory.imageUrl ? (
-                          <img
-                            src={subcategory.imageUrl}
-                            alt={subcategory.name}
-                            onError={(e) => e.currentTarget.style.display = 'none'}
-                          />
-                        ) : (
-                          <div className="image-placeholder">📷</div>
-                        )}
-                      </div>
-                      <div className="subcategory-info">
-                        <h3>{subcategory.name}</h3>
-                        <div className="subcategory-meta">
-                          <span className={`status ${subcategory.isActive ? 'active' : 'inactive'}`}>
-                            {subcategory.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                          <span className="category">
-                            {categories.find(c => c.id === subcategory.categoryId)?.name || 'Unknown'}
-                          </span>
-                          <span className="order">Order: {subcategory.displayOrder}</span>
-                        </div>
-                      </div>
-                      <div className="expand-icon">
-                        {expandedSubcategoryId === subcategory.id ? '▲' : '▼'}
-                      </div>
-                    </div>
+              <div className="subcategory-info">
+                <h3>{subcategory.name}</h3>
+                <div className="subcategory-meta">
+                  <span className={`status ${subcategory.isActive ? 'active' : 'inactive'}`}>
+                    {subcategory.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                  <span className="category">
+                    {categories.find(c => c.id === subcategory.categoryId)?.name || 'Unknown'}
+                  </span>
+                  <span className="order">Order: {subcategory.displayOrder}</span>
+                </div>
+              </div>
+              <div className="expand-icon">
+                {expandedSubcategoryId === subcategory.id ? '▲' : '▼'}
+              </div>
+            </div>
 
-                    {expandedSubcategoryId === subcategory.id && (
-                      <div className="subcategory-details">
-                        <p>{subcategory.description}</p>
-                        <div className="subcategory-meta-full">
-                          <div>
-                            <strong>Created:</strong>
-                            <span>{subcategory.createdAt ? new Date(subcategory.createdAt).toLocaleDateString() : 'N/A'}</span>
-                          </div>
-                          {subcategory.updatedAt && (
-                            <div>
-                              <strong>Updated:</strong>
-                              <span>{new Date(subcategory.updatedAt).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                          <div>
-                            <strong>Category ID:</strong>
-                            <span>{subcategory.categoryId}</span>
-                          </div>
-                        </div>
-                        <div className="subcategory-actions">
-                          <button
-                            className="action-btn edit"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditClick(subcategory);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="action-btn delete"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(subcategory.id);
-                            }}
-                            disabled={actionLoading[subcategory.id] === 'delete'}
-                          >
-                            {actionLoading[subcategory.id] === 'delete' ? (
-                              <span className="spinner small"></span>
-                            ) : 'Delete'}
-                          </button>
-                          <button
-                            className="action-btn deactivate"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleActive(subcategory);
-                            }}
-                            disabled={actionLoading[subcategory.id] === 'toggle'}
-                          >
-                            {actionLoading[subcategory.id] === 'toggle' ? (
-                              <span className="spinner small"></span>
-                            ) : subcategory.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
+            {expandedSubcategoryId === subcategory.id && (
+              <div className="subcategory-details">
+                <p>{subcategory.description}</p>
+                <div className="subcategory-meta-full">
+                  <div>
+                    <strong>Created:</strong>
+                    <span>{subcategory.createdAt ? new Date(subcategory.createdAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
-                ))}
+                  {subcategory.updatedAt && (
+                    <div>
+                      <strong>Updated:</strong>
+                      <span>{new Date(subcategory.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  <div>
+                    <strong>Category ID:</strong>
+                    <span>{subcategory.categoryId}</span>
+                  </div>
+                </div>
+                <div className="subcategory-actions">
+                  <button
+                    className="action-btn edit"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditClick(subcategory);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="action-btn delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(subcategory.id);
+                    }}
+                    disabled={actionLoading[subcategory.id] === 'delete'}
+                  >
+                    {actionLoading[subcategory.id] === 'delete' ? (
+                      <span className="spinner small"></span>
+                    ) : 'Delete'}
+                  </button>
+                  <button
+                    className="action-btn deactivate"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleActive(subcategory);
+                    }}
+                    disabled={actionLoading[subcategory.id] === 'toggle'}
+                  >
+                    {actionLoading[subcategory.id] === 'toggle' ? (
+                      <span className="spinner small"></span>
+                    ) : subcategory.isActive ? 'Deactivate' : 'Activate'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
+        ))}
+      </div>
+
+      {/* Pagination Controls */}
+      {renderPagination()}
+
+      {/* Page Info */}
+      <div className="pagination-info">
+        Showing {Math.min(indexOfFirstItem + 1, filteredSubcategories.length)} to {Math.min(indexOfLastItem, filteredSubcategories.length)} of {filteredSubcategories.length} subcategories
+      </div>
+    </>
+  )}
+</div>
         </div>
       </div>
     </div>

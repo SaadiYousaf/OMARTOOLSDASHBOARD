@@ -481,6 +481,433 @@ body {
     margin-left: 0;
   }
 }
+/* Pagination Container */
+.pagination-container {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.pagination-info {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+/* Pagination Buttons Container */
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Base Button Styles */
+.pagination-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  height: 44px;
+}
+
+.pagination-buttons button:hover:not(:disabled) {
+  border-color: #3498db;
+  background: #3498db;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.pagination-buttons button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Active Page Button */
+.pagination-buttons button.active {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
+}
+
+/* Navigation Buttons */
+.pagination-nav {
+  padding: 0.75rem 1.25rem !important;
+  min-width: 100px;
+}
+
+.pagination-edge {
+  padding: 0.75rem 0.75rem !important;
+  min-width: 60px;
+}
+
+/* Disabled State */
+.pagination-buttons button:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* Ellipsis */
+.pagination-ellipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  color: #64748b;
+  font-weight: 600;
+  min-width: 44px;
+  height: 44px;
+}
+.rich-text-editor {
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+/* Main container */
+.rich-text-editor .jodit-container {
+  border: none !important;
+  border-radius: 6px;
+}
+
+/* Toolbar styling */
+.rich-text-editor .jodit-toolbar__box {
+  background: #f8f9fa !important;
+  border-bottom: 1px solid #dee2e6 !important;
+  padding: 8px !important;
+  min-height: auto !important;
+}
+
+.rich-text-editor .jodit-toolbar-button {
+  border-radius: 4px !important;
+  margin: 1px !important;
+}
+
+.rich-text-editor .jodit-toolbar-button:hover {
+  background: #e9ecef !important;
+}
+
+.rich-text-editor .jodit-toolbar-button__button {
+  color: #495057 !important;
+}
+
+.rich-text-editor .jodit-toolbar-button_active {
+  background: #007bff !important;
+}
+
+.rich-text-editor .jodit-toolbar-button_active .jodit-toolbar-button__button {
+  color: white !important;
+}
+
+/* Editor area */
+.rich-text-editor .jodit-wysiwyg {
+  padding: 16px !important;
+  min-height: 250px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  background: white !important;
+}
+
+.rich-text-editor .jodit-wysiwyg:focus {
+  background: #fafafa !important;
+}
+
+/* Status bar */
+.rich-text-editor .jodit-status-bar {
+  background: #f8f9fa !important;
+  border-top: 1px solid #dee2e6 !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  color: #6c757d !important;
+}
+
+/* Link dialog and other popups */
+.rich-text-editor .jodit-dialog__box {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.rich-text-editor .jodit-dialog__header {
+  background: #f8f9fa !important;
+  border-bottom: 1px solid #dee2e6 !important;
+  padding: 12px 16px !important;
+}
+
+/* Placeholder styling */
+.rich-text-editor .jodit-placeholder {
+  color: #6c757d !important;
+  font-style: italic !important;
+  padding: 16px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rich-text-editor .jodit-toolbar__box {
+    padding: 4px !important;
+  }
+  
+  .rich-text-editor .jodit-wysiwyg {
+    padding: 12px !important;
+    min-height: 200px !important;
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .rich-text-editor .jodit-container {
+    background: #1a1a1a !important;
+    color: #e9ecef !important;
+  }
+  
+  .rich-text-editor .jodit-toolbar__box {
+    background: #2d3748 !important;
+    border-color: #4a5568 !important;
+  }
+  
+  .rich-text-editor .jodit-wysiwyg {
+    background: #1a1a1a !important;
+    color: #e9ecef !important;
+  }
+  
+  .rich-text-editor .jodit-status-bar {
+    background: #2d3748 !important;
+    border-color: #4a5568 !important;
+    color: #a0aec0 !important;
+  }
+  
+  .rich-text-editor .jodit-toolbar-button__button {
+    color: #e9ecef !important;
+  }
+  
+  .rich-text-editor .jodit-toolbar-button:hover {
+    background: #4a5568 !important;
+  }
+}
+/* Page Size Selector */
+.pagination-page-size {
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+
+.pagination-page-size label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.pagination-page-size select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-page-size select:hover {
+  border-color: #3498db;
+}
+
+.pagination-page-size select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Icon Sizes */
+.pagination-buttons button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pagination-edge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pagination-container {
+    padding: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .pagination-buttons {
+    gap: 0.25rem;
+  }
+
+  .pagination-buttons button {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    min-width: 40px;
+    height: 40px;
+  }
+
+  .pagination-nav {
+    padding: 0.6rem 1rem !important;
+    min-width: 90px;
+    font-size: 0.8rem;
+  }
+
+  .pagination-edge {
+    padding: 0.6rem 0.6rem !important;
+    min-width: 50px;
+  }
+
+  .pagination-buttons button span {
+    display: none;
+  }
+
+  .pagination-nav::after {
+    content: attr(title);
+  }
+
+  .pagination-buttons button .pagination-text {
+    display: none;
+  }
+
+  /* Show icons only on mobile for nav buttons */
+  .pagination-nav:first-child::before {
+    content: "←";
+    margin-right: 0;
+  }
+
+  .pagination-nav:last-child::before {
+    content: "→";
+    margin-left: 0;
+  }
+
+  .pagination-page-size {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .pagination-page-size label {
+    font-size: 0.85rem;
+  }
+
+  .pagination-page-size select {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination-buttons {
+    gap: 0.2rem;
+  }
+
+  .pagination-buttons button {
+    padding: 0.5rem 0.6rem;
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+  }
+
+  .pagination-nav {
+    min-width: 60px;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .pagination-edge {
+    min-width: 40px;
+    padding: 0.5rem 0.5rem !important;
+  }
+
+  /* Hide page numbers on very small screens, show only active */
+  .pagination-buttons button:not(.active):not(.pagination-nav):not(.pagination-edge) {
+    display: none;
+  }
+
+  /* Always show first, last, and active pages */
+  .pagination-buttons button:first-child,
+  .pagination-buttons button:last-child,
+  .pagination-buttons button.active {
+    display: flex !important;
+  }
+}
+
+/* Animation for page changes */
+.pagination-buttons button {
+  position: relative;
+  overflow: hidden;
+}
+
+.pagination-buttons button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(52, 152, 219, 0.1);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.pagination-buttons button:active::after {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+/* Focus states for accessibility */
+.pagination-buttons button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+}
+
+.pagination-page-size select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+}
+
+/* Loading state (if needed) */
+.pagination-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
 
 @media (max-width: 768px) {
   .form-grid {
@@ -628,6 +1055,132 @@ body {
   font-size: 1.25rem;
   transition: all 0.2s;
 }
+/* Rich Text Editor Styles */
+.rich-text-editor {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.toolbar-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.toolbar-btn:active {
+  background: #dee2e6;
+}
+
+.rich-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: none;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.rich-textarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #3498db;
+}
+
+/* JSON Editor Styles */
+.json-editor {
+  position: relative;
+}
+
+.json-editor textarea {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.json-error {
+  border-color: #e74c3c !important;
+  background: #fdf2f2;
+}
+
+.json-error-message {
+  color: #e74c3c;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.json-success-message {
+  color: #27ae60;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Markdown Preview (Optional) */
+.markdown-preview {
+  margin-top: 8px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.markdown-preview strong {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.markdown-preview em {
+  font-style: italic;
+}
+
+.markdown-preview ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .editor-toolbar {
+    flex-wrap: wrap;
+  }
+  
+  .toolbar-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+  
+  .rich-textarea {
+    min-height: 100px;
+  }
+}
 
 .btn-refresh:hover {
   color: var(--primary-color);
@@ -683,4 +1236,114 @@ body {
   right: 1rem;
   font-size: 1.25rem;
   font-weight: bold;
+}
+
+.existing-images {
+    margin-bottom: 20px;
+}
+
+.existing-images h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.image-preview.existing {
+    border: 2px solid #3498db;
+    position: relative;
+}
+
+.image-preview.new {
+    border: 2px solid #27ae60;
+    position: relative;
+}
+
+.image-info {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+}
+
+.primary-badge {
+    background: #af2727;
+    opacity: 80%;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.image-preview {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.image-preview:hover {
+    transform: scale(1.05);
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.remove-image-btn:hover {
+    background: #e74c3c;
+    transform: scale(1.1);
+}
+
+.remove-image-btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Warning for primary image deletion */
+.image-preview.existing:first-child .remove-image-btn {
+    background: rgba(243, 156, 18, 0.9);
+}
+
+.image-preview.existing:first-child .remove-image-btn:hover {
+    background: #f39c12;
+}
+
+.image-preview.existing:first-child .remove-image-btn::after {
+    content: ' (Primary)';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    white-space: nowrap;
+    color: #e74c3c;
+    font-weight: bold;
 }

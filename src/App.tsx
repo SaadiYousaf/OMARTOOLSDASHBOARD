@@ -74,7 +74,7 @@ function App() {
         <ProductServiceProvider>
           <div className="App">
             <header className="App-header">
-              <h1>Product Management System</h1>
+              <h1>Omer Tools - Product Management System</h1>
               {/* Add logout button in header */}
               <button onClick={handleLogout} className="logout-btn">
                 Logout

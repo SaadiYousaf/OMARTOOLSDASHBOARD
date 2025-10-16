@@ -35,17 +35,25 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         displayOrder: 0,
         isActive: true,
     });
-
+const [tempImages, setTempImages] = useState<File[]>([]);
     const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
     const [categoryImages, setCategoryImages] = useState<CategoryImage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const API_BASE_IMG_URL =process.env.REACT_APP_BASE_IMG_URL
 
     // ===============================
     // FETCH CATEGORIES
     // ===============================
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL 
+    const handleImageUploadForNewCategory = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const newFiles = Array.from(e.target.files);
+    setTempImages(prev => [...prev, ...newFiles]);
+    e.target.value = ''; // Reset file input
+};
     const fetchCategories = async (signal?: AbortSignal) => {
         setIsLoading(true);
         try {
@@ -286,6 +294,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                 const errorData = await res.json();
                 throw new Error(errorData.message || 'Failed to create category');
             }
+const result = await res.json();
+        
+        // Upload images for new category
+        if (tempImages.length > 0 && result.id) {
+            await uploadImagesForNewCategory(result.id);
+        }
 
             setSuccess('Category created successfully');
             resetForm();
@@ -297,7 +311,21 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
             setIsLoading(false);
         }
     };
+const uploadImagesForNewCategory = async (categoryId: string) => {
+    for (const image of tempImages) {
+        const formData = new FormData();
+        formData.append('file', image);
+        formData.append('categoryId', categoryId);
+        formData.append('altText', 'Category image');
+        formData.append('isPrimary', 'true');
 
+        await fetch(`${API_BASE_URL}/categories/images`, {
+            method: 'POST',
+            body: formData,
+        });
+    }
+    setTempImages([]); // Clear temp images after upload
+};
     const handleUpdateCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingCategory) return;
@@ -407,6 +435,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
             displayOrder: 0,
             isActive: true,
         });
+        setTempImages([]);
         setError(null);
         setSuccess(null);
     };
@@ -419,6 +448,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
 
     const cancelEditing = () => {
         setEditingCategory(null);
+         setTempImages([]);
         setError(null);
         setSuccess(null);
     };
@@ -462,12 +492,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     return (
         <div className="category-management-dashboard">
             {/* HEADER */}
-            <header className="dashboard-header">
-                <div className="header-content">
+            <header className="dashboard-header-c">
+                <div className="header-content-c">
                     <h1>Category Management</h1>
                     <p>Create and manage product categories</p>
                 </div>
-                <div className="stats-card">
+                <div className="stats-grid">
                     <div className="stat-item">
                         <span>Total Categories</span>
                         <strong>{allCategories?.length || 0}</strong>
@@ -548,43 +578,71 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                                 </div>
                             </div>
 
-                            {/* IMAGE UPLOAD (only when editing) */}
-                            {editingCategory && (
-                                <div className="form-group">
-                                    <label>Category Images</label>
-                                    <div className="image-upload-section">
-                                        <label className="file-upload-btn">
-                                            Upload Image
-                                            <input
-                                                type="file"
-                                                onChange={(e) => handleImageUpload(e, editingCategory.id)}
-                                                accept="image/*"
-                                            />
-                                        </label>
-                                        
-                                        {categoryImages.length > 0 && (
-                                            <div className="image-preview-list">
-                                                <h4>Current Images</h4>
-                                                <div className="image-list">
-                                                    {categoryImages.map((image) => (
-                                                        <div key={image.id} className="image-item">
-                                                            <img src={image.imageUrl} alt={image.altText} />
-                                                            <button
-                                                                type="button"
-                                                                className="delete-image-btn"
-                                                                onClick={() => handleDeleteImage(image.id)}
-                                                                disabled={isLoading}
-                                                            >
-                                                                Delete
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                     {/* IMAGE UPLOAD (for both create and edit) */}
+<div className="form-group">
+    <label>Category Images</label>
+    <div className="image-upload-section">
+        <label className="file-upload-btn">
+            Upload Image
+            <input
+                type="file"
+                onChange={(e) => {
+                    if (editingCategory) {
+                        handleImageUpload(e, editingCategory.id);
+                    } else {
+                        handleImageUploadForNewCategory(e);
+                    }
+                }}
+                accept="image/*"
+            />
+        </label>
+        
+        {/* Show temporary images for new categories */}
+        {!editingCategory && tempImages.length > 0 && (
+            <div className="image-preview-list">
+                <h4>Images to Upload</h4>
+                <div className="image-list">
+                    {tempImages.map((image, index) => (
+                        <div key={index} className="image-item">
+                            <img src={URL.createObjectURL(image)} alt={`Preview ${index + 1}`} />
+                            <button
+                                type="button"
+                                className="delete-image-btn"
+                                onClick={() => {
+                                    setTempImages(prev => prev.filter((_, i) => i !== index));
+                                }}
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+        
+        {/* Show current images when editing */}
+        {editingCategory && categoryImages.length > 0 && (
+            <div className="image-preview-list">
+                <h4>Current Images</h4>
+                <div className="image-list">
+                    {categoryImages.map((image) => (
+                        <div key={image.id} className="image-item">
+                            <img src={API_BASE_IMG_URL + image.imageUrl} alt={image.altText} />
+                            <button
+                                type="button"
+                                className="delete-image-btn"
+                                onClick={() => handleDeleteImage(image.id)}
+                                disabled={isLoading}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+    </div>
+</div>
 
                             {/* BUTTONS */}
                             <div className="form-footer">
@@ -716,7 +774,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                                 </div>
 
                                 {totalPages > 1 && (
-                                    <div className="pagination-controls">
+                                    <div className="pagination-controls-c">
                                         <button
                                             className="pagination-btn"
                                             onClick={() => goToPage(currentPage - 1)}

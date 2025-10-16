@@ -19,6 +19,7 @@ const OrderManagement = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [orderTypeFilter, setOrderTypeFilter] = useState('all');
 
   // Fetch orders from API
   const fetchOrders = async () => {
@@ -67,10 +68,19 @@ const OrderManagement = ({ onLogout }) => {
         (order.transactionId && order.transactionId.toLowerCase().includes(term))
       );
     }
+     if (orderTypeFilter !== 'all') {
+    if (orderTypeFilter === 'guest') {
+      result = result.filter(order => order.isGuestOrder);
+    } else if (orderTypeFilter === 'collect') {
+      result = result.filter(order => order.isConfirmAndCollect);
+    } else if (orderTypeFilter === 'regular') {
+      result = result.filter(order => !order.isGuestOrder && !order.isConfirmAndCollect);
+    }
+  }
     
     setFilteredOrders(result);
     setCurrentPage(1);
-  }, [statusFilter, searchTerm, orders]);
+  }, [statusFilter, searchTerm, orders,orderTypeFilter]);
 
   // Update order status
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -174,6 +184,17 @@ const OrderManagement = ({ onLogout }) => {
             <option value="Cancelled">Cancelled</option>
           </select>
         </div>
+         <div className="filter-group">
+    <select 
+      value={orderTypeFilter} 
+      onChange={(e) => setOrderTypeFilter(e.target.value)}
+    >
+      <option value="all">All Order Types</option>
+      <option value="guest">👤 Guest Orders</option>
+      <option value="collect">🏪 Click & Collect</option>
+      <option value="regular">✓ Registered Users</option>
+    </select>
+  </div>
       </div>
 
       <div className="orders-stats">
@@ -193,6 +214,14 @@ const OrderManagement = ({ onLogout }) => {
           <h3>Pending</h3>
           <p>{orders.filter(o => o.status === 'Pending').length}</p>
         </div>
+         <div className="stat-card">
+    <h3>Guest Orders</h3>
+    <p>{orders.filter(o => o.isGuestOrder).length}</p>
+  </div>
+  <div className="stat-card">
+    <h3>Click & Collect</h3>
+    <p>{orders.filter(o => o.isConfirmAndCollect).length}</p>
+  </div>
       </div>
 
       {selectedOrder ? (
@@ -211,6 +240,7 @@ const OrderManagement = ({ onLogout }) => {
                   <th>Order Number</th>
                   <th>User</th>
                   <th>Date</th>
+                  <th>Type</th>
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Payment</th>
@@ -224,6 +254,16 @@ const OrderManagement = ({ onLogout }) => {
                       <td>{order.orderNumber}</td>
                       <td>{order.userId}</td>
                       <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                       <td>
+          {/* ORDER TYPE INDICATORS */}
+          <div className="order-type-indicators">
+            {order.isGuestOrder && <span title="Guest Order">👤</span>}
+            {order.isConfirmAndCollect && <span title="Click & Collect">🏪</span>}
+            {!order.isGuestOrder && !order.isConfirmAndCollect && (
+              <span title="Registered User">✓</span>
+            )}
+          </div>
+        </td>
                       <td>${order.totalAmount?.toFixed(2)}</td>
                       <td>
                         <span className={`status-badge ${order.status.toLowerCase()}`}>

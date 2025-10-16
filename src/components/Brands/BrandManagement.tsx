@@ -39,6 +39,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [products, setProducts] = useState<{ [key: string]: ProductDto[] }>({});
   const [isEditing, setIsEditing] = useState(false);
+  const [tempImages, setTempImages] = useState<File[]>([]);
   const [brandForm, setBrandForm] = useState<BrandDto>({
     id: '',
     categoryIds: [],
@@ -61,7 +62,7 @@ const BrandManagement = ({ onBrandCreated }: { onBrandCreated: () => void }) => 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: keyof BrandDto; direction: 'asc' | 'desc' } | null>(null);
   const [showProducts, setShowProducts] = useState<string | null>(null);
-
+const API_BASE_IMG_URL =process.env.REACT_APP_BASE_IMG_URL
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -82,7 +83,21 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
       setIsFetching(false);
     }
   };
+const handleSelectAll = () => {
+  const allCategoryIds = categories.map(category => category.id);
+  setBrandForm(prev => ({
+    ...prev,
+    categoryIds: allCategoryIds
+  }));
+};
 
+// Remove all categories
+const handleRemoveAll = () => {
+  setBrandForm(prev => ({
+    ...prev,
+    categoryIds: []
+  }));
+};
   const fetchCategories = async () => {
     setIsFetchingCategories(true);
     setError(null);
@@ -97,6 +112,13 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
       setIsFetchingCategories(false);
     }
   };
+  const handleImageUploadForNewBrand = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (!e.target.files || e.target.files.length === 0) return;
+
+  const newFiles = Array.from(e.target.files);
+  setTempImages(prev => [...prev, ...newFiles]);
+  e.target.value = ''; // Reset file input
+};
 
   const fetchProductsByBrand = async (brandId: string) => {
     try {
@@ -233,6 +255,13 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || `Failed to ${isEditing ? 'update' : 'create'} brand`);
       }
+       const result = await res.json();
+    
+    // Upload images for new brand
+    if (!isEditing && tempImages.length > 0 && result.id) {
+      await uploadImagesForNewBrand(result.id);
+    }
+      
 
       resetForm();
       fetchBrands();
@@ -244,6 +273,21 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
       setIsLoading(false);
     }
   };
+  const uploadImagesForNewBrand = async (brandId: string) => {
+  for (const image of tempImages) {
+    const formData = new FormData();
+    formData.append('file', image);
+    formData.append('brandId', brandId);
+    formData.append('altText', 'Brand image');
+    formData.append('isPrimary', 'true');
+
+    await fetch(`${API_BASE_URL}/brands/images`, {
+      method: 'POST',
+      body: formData,
+    });
+  }
+  setTempImages([]); // Clear temp images after upload
+};
 
   const handleEdit = (brand: BrandDto) => {
     setBrandForm(brand);
@@ -413,6 +457,24 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
                           </div>
                         ))}
                       </div>
+                                             <div className="category-actions">
+    <button
+      type="button"
+      className="btn-select-all"
+      onClick={handleSelectAll}
+      disabled={isFetchingCategories || categories.length === 0}
+    >
+      Select All
+    </button>
+    <button
+      type="button"
+      className="btn-remove-all"
+      onClick={handleRemoveAll}
+      disabled={isFetchingCategories || brandForm.categoryIds.length === 0}
+    >
+      Remove All
+    </button>
+  </div>
                       {isFetchingCategories && (
                         <div className="loading-text">Loading categories...</div>
                       )}
@@ -478,44 +540,72 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
                       />
                     </div>
 
-                    {/* Image upload section */}
-                    {isEditing && (
-                      <div className="form-group full-width">
-                        <label>Brand Images</label>
-                        <div className="image-upload-section">
-                          <label className="file-upload-btn">
-                            {isImageLoading ? 'Uploading...' : 'Upload Image'}
-                            <input
-                              type="file"
-                              onChange={(e) => handleImageUpload(e, brandForm.id)}
-                              accept="image/*"
-                              disabled={isImageLoading}
-                            />
-                          </label>
-                          
-                          {brandImages.length > 0 && (
-                            <div className="image-preview-list">
-                              <h4>Current Images</h4>
-                              <div className="image-list">
-                                {brandImages.map((image) => (
-                                  <div key={image.id} className="image-item">
-                                    <img src={image.imageUrl} alt={image.altText} />
-                                    <button
-                                      type="button"
-                                      className="delete-image-btn"
-                                      onClick={() => handleDeleteImage(image.id)}
-                                      disabled={isImageLoading}
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    {/* Image upload section - Available for both create and edit */}
+<div className="form-group full-width">
+  <label>Brand Images</label>
+  <div className="image-upload-section">
+    <label className="file-upload-btn">
+      {isImageLoading ? 'Uploading...' : 'Upload Image'}
+      <input
+        type="file"
+        onChange={(e) => {
+          if (isEditing && brandForm.id) {
+            handleImageUpload(e, brandForm.id);
+          } else {
+            handleImageUploadForNewBrand(e);
+          }
+        }}
+        accept="image/*"
+        disabled={isImageLoading}
+      />
+    </label>
+    
+    {/* Show temporary images for new brands */}
+    {!isEditing && tempImages.length > 0 && (
+      <div className="image-preview-list">
+        <h4>Images to Upload</h4>
+        <div className="image-list">
+          {tempImages.map((image, index) => (
+            <div key={index} className="image-item">
+              <img src={URL.createObjectURL(image)} alt={`Preview ${index + 1}`} />
+              <button
+                type="button"
+                className="delete-image-btn"
+                onClick={() => {
+                  setTempImages(prev => prev.filter((_, i) => i !== index));
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    {/* Show current images when editing */}
+    {isEditing && brandImages.length > 0 && (
+      <div className="image-preview-list">
+        <h4>Current Images</h4>
+        <div className="image-list">
+          {brandImages.map((image) => (
+            <div key={image.id} className="image-item">
+              <img src={API_BASE_IMG_URL + image.imageUrl} alt={image.altText} />
+              <button
+                type="button"
+                className="delete-image-btn"
+                onClick={() => handleDeleteImage(image.id)}
+                disabled={isImageLoading}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
                   </div>
 
                   <div className="form-actions">

@@ -26,7 +26,7 @@ const OrderManagement = () => {
       // In a real implementation, we would call an admin endpoint to get all orders
       // Since we don't have one, we'll simulate with the user endpoint for demo
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${API_BASE_URL}/orders/user`, {
+      const response = await fetch(`${API_BASE_URL}/orders/admin`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -168,6 +168,9 @@ const OrderManagement = () => {
             <option value="Shipped">Shipped</option>
             <option value="Delivered">Delivered</option>
             <option value="Cancelled">Cancelled</option>
+            <option value="guest">Guest Orders</option>
+            <option value="collect">Click & Collect</option>
+            <option value="regular">Registered Users</option>
           </select>
         </div>
       </div>
@@ -207,6 +210,7 @@ const OrderManagement = () => {
                   <th>Order Number</th>
                   <th>User</th>
                   <th>Date</th>
+                   <th>Type</th>
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Payment</th>
@@ -220,6 +224,13 @@ const OrderManagement = () => {
                       <td>{order.orderNumber}</td>
                       <td>{order.userId}</td>
                       <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td><div className="order-type-indicators">
+            {order.isGuestOrder && <span title="Guest Order">👤</span>}
+            {order.isConfirmAndCollect && <span title="Click & Collect">🏪</span>}
+            {!order.isGuestOrder && !order.isConfirmAndCollect && (
+              <span title="Registered User">✓</span>
+            )}
+          </div></td>
                       <td>${order.totalAmount?.toFixed(2)}</td>
                       <td>
                         <span className={`status-badge ${order.status.toLowerCase()}`}>
@@ -243,7 +254,7 @@ const OrderManagement = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="no-orders">
+                    <td colSpan="8" className="no-orders">
                       No orders found
                     </td>
                   </tr>
@@ -327,6 +338,21 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
       <div className="order-detail-grid">
         <div className="order-info">
           <h3>Order Information</h3>
+           {/*GUEST & CONFIRM & COLLECT INDICATORS HERE */}
+            <div className="info-group">
+    <label>Order Type:</label>
+    <div className="order-type-badges">
+      {order.isGuestOrder && (
+        <span className="badge guest-badge">👤 Guest Order</span>
+      )}
+      {order.isConfirmAndCollect && (
+        <span className="badge collect-badge">🏪 Click & Collect</span>
+      )}
+      {!order.isGuestOrder && !order.isConfirmAndCollect && (
+        <span className="badge regular-badge">✓ Registered User</span>
+      )}
+    </div>
+  </div>
           <div className="info-group">
             <label>Order Date:</label>
             <span>{new Date(order.createdAt).toLocaleString()}</span>

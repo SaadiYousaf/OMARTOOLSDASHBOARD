@@ -83,19 +83,32 @@
     cursor: not-allowed;
   }
 .dashboard-header {
-    display: flex;
+ display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
     flex-wrap: wrap;
     gap: 20px;
+    background: #fff;  
+    padding: 20px;             
+    border-radius: 8px;       
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  width: 100%;
+
 }
+
 
 .header-content h1 {
     font-size: 28px;
     font-weight: 600;
     margin: 0;
     color: #2c3e50;
+}
+
+.pagination-controls-s {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
 }
 
 .header-content p {

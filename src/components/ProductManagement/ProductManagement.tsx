@@ -8,6 +8,7 @@ import { FiPlus, FiTrash2, FiX, FiCheck, FiUpload, FiHome, FiTag, FiLayers, FiGr
 import DashboardSidebar from './DasboardSidebar';
 import DashboardHeader from './DashboardHeader';
 import StatsCard from './StatsCard';
+import RichTextEditor from '../Helper/RichTextEditor';
 import {
     FiBox, FiTruck, FiCheckCircle, FiXCircle,
     FiFilter, FiRefreshCw, FiEye,
@@ -53,6 +54,37 @@ const ProductManagement = () => {
         outOfStock: 0,
         redemptionProducts: 0
     });
+
+    const handleDeleteImage = async (imageId: string) => {
+    if (!window.confirm('Are you sure you want to delete this image?')) return;
+
+    setIsLoading(true);
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/images/${imageId}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete image');
+        }
+
+        // Remove the image from current product state
+        setCurrentProduct(prev => ({
+            ...prev!,
+            images: prev!.images?.filter(img => img.id !== imageId) || []
+        }));
+
+        setSuccess(true);
+        
+        // Optional: Refresh the product data to ensure consistency
+        await fetchInitialData();
+        
+    } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete image');
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     // Search and filter state
     const [searchTerm, setSearchTerm] = useState('');
@@ -278,6 +310,8 @@ const ProductManagement = () => {
         }));
     };
 
+    
+
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -310,7 +344,56 @@ const ProductManagement = () => {
 
         return await Promise.all(uploadPromises);
     };
+const formatText = (type: string) => {
+  const textarea = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+  if (!textarea) return;
 
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selectedText = textarea.value.substring(start, end);
+  let formattedText = '';
+
+  switch (type) {
+    case 'bold':
+      formattedText = `**${selectedText}**`;
+      break;
+    case 'italic':
+      formattedText = `*${selectedText}*`;
+      break;
+    case 'heading':
+      formattedText = `## ${selectedText}`;
+      break;
+    case 'bullet':
+      formattedText = selectedText.split('\n').map(line => `• ${line}`).join('\n');
+      break;
+    default:
+      formattedText = selectedText;
+  }
+
+  const newValue = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
+  setCurrentProduct(prev => ({
+    ...prev!,
+    description: newValue
+  }));
+
+  // Restore cursor position
+  setTimeout(() => {
+    textarea.focus();
+    textarea.setSelectionRange(start, start + formattedText.length);
+  }, 0);
+};
+
+// JSON validation function
+const isValidJson = (jsonString: string): boolean => {
+  if (!jsonString.trim()) return true;
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    return typeof parsed === 'object' && parsed !== null;
+  } catch (e) {
+    return false;
+  }
+};
     // Product form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -321,6 +404,10 @@ const ProductManagement = () => {
             setError('Brand and Subcategory are required fields');
             return;
         }
+          if (currentProduct.specifications && !isValidJson(currentProduct.specifications)) {
+    setError('Please fix the JSON format in specifications before submitting.');
+    return;
+  }
 
         setIsLoading(true);
         setError(null);
@@ -843,14 +930,20 @@ const ProductManagement = () => {
                                                             onChange={handleInputChange}
                                                         />
                                                     </div>
-                                                    <div className="form-group">
+                                        <div className="form-group">
                                                         <label>Description*</label>
-                                                        <textarea
-                                                            name="description"
-                                                            value={currentProduct?.description || ''}
-                                                            onChange={handleInputChange}
-                                                            required
-                                                        />
+                                                        <label>Description*</label>
+  <RichTextEditor
+    value={currentProduct?.description || ''}
+    onChange={(newValue) => setCurrentProduct(prev => ({
+      ...prev!,
+      description: newValue
+    }))}
+    placeholder="Enter detailed product description with formatting..."
+  />
+  <div className="form-hint">
+    Use the toolbar to format your text with bold, italics, lists, links, etc.
+  </div>
                                                     </div>
                                                 </div>
 
@@ -944,51 +1037,83 @@ const ProductManagement = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="form-section">
-                                                    <h3>Images</h3>
-                                                    <div className="form-group">
-                                                        <label className="file-upload-label">
-                                                            <FiUpload /> Upload Product Images
-                                                            <input
-                                                                type="file"
-                                                                multiple
-                                                                onChange={handleImageChange}
-                                                                accept="image/*"
-                                                                className="file-upload-input"
-                                                            />
-                                                        </label>
-                                                        <div className="file-upload-hint">
-                                                            {selectedImages.length > 0 ?
-                                                                `${selectedImages.length} files selected` :
-                                                                'No files selected'}
-                                                        </div>
-                                                    </div>
-                                                    {selectedImages.length > 0 && (
-                                                        <div className="image-previews">
-                                                            <h4>Selected Images</h4>
-                                                            <div className="preview-container">
-                                                                {selectedImages.map((image, index) => (
-                                                                    <div key={index} className="image-preview">
-                                                                        <img
-                                                                            src={URL.createObjectURL(image)}
-                                                                            alt={`Preview ${index + 1}`}
-                                                                        />
-                                                                        <button
-                                                                            className="remove-image-btn"
-                                                                            onClick={() => {
-                                                                                setSelectedImages(prev =>
-                                                                                    prev.filter((_, i) => i !== index)
-                                                                                );
-                                                                            }}
-                                                                        >
-                                                                            <FiX />
-                                                                        </button>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                               <div className="form-section">
+    <h3>Images</h3>
+    
+    {/* Display existing product images with delete option */}
+    {currentProduct?.images && currentProduct.images.length > 0 && (
+        <div className="existing-images">
+            <h4>Current Images</h4>
+            <div className="preview-container">
+                {currentProduct.images.map((image, index) => (
+                    <div key={image.id || index} className="image-preview existing">
+                        <img
+                            src={API_BASE_IMG_URL + image.imageUrl}
+                            alt={image.altText || `Product Image ${index + 1}`}
+                        />
+                        <div className="image-info">
+                            {index === 0 && <span className="primary-badge">Primary</span>}
+                        </div>
+                        <button
+                            className="remove-image-btn"
+                            onClick={() => handleDeleteImage(image.id)}
+                            title="Delete image"
+                            disabled={isLoading}
+                        >
+                            <FiX />
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )}
+
+    {/* Upload new images section */}
+    <div className="form-group">
+        <label className="file-upload-label">
+            <FiUpload /> Upload New Product Images
+            <input
+                type="file"
+                multiple
+                onChange={handleImageChange}
+                accept="image/*"
+                className="file-upload-input"
+            />
+        </label>
+        <div className="file-upload-hint">
+            {selectedImages.length > 0 ?
+                `${selectedImages.length} new files selected` :
+                'No new files selected'}
+        </div>
+    </div>
+    
+    {/* Preview new selected images */}
+    {selectedImages.length > 0 && (
+        <div className="image-previews">
+            <h4>New Images to Upload</h4>
+            <div className="preview-container">
+                {selectedImages.map((image, index) => (
+                    <div key={index} className="image-preview new">
+                        <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Preview ${index + 1}`}
+                        />
+                        <button
+                            className="remove-image-btn"
+                            onClick={() => {
+                                setSelectedImages(prev =>
+                                    prev.filter((_, i) => i !== index)
+                                );
+                            }}
+                        >
+                            <FiX />
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )}
+</div>
 
                                                 <div className="form-section">
                                                     <h3>Additional Information</h3>
@@ -1059,12 +1184,27 @@ const ProductManagement = () => {
                                                     </div>
                                                     <div className="form-group">
                                                         <label>Specifications (JSON)</label>
-                                                        <textarea
-                                                            name="specifications"
-                                                            value={currentProduct?.specifications || '{}'}
-                                                            onChange={handleInputChange}
-                                                            rows={4}
-                                                        />
+                                                        <div className="json-editor">
+    <textarea
+      name="specifications"
+      value={currentProduct?.specifications || '{}'}
+      onChange={handleInputChange}
+      rows={4}
+      className={isValidJson(currentProduct?.specifications || '{}') ? '' : 'json-error'}
+    />
+    {!isValidJson(currentProduct?.specifications || '{}') && (
+      <div className="json-error-message">
+        ❌ Invalid JSON format. Please check your syntax.
+      </div>
+    )}
+    {isValidJson(currentProduct?.specifications || '{}') && 
+     currentProduct?.specifications && 
+     currentProduct.specifications !== '{}' && (
+      <div className="json-success-message">
+        ✅ Valid JSON
+      </div>
+    )}
+  </div>
                                                     </div>
                                                 </div>
                                             </div>

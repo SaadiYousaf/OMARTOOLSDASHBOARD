@@ -11,6 +11,48 @@
     align-items: center;
     margin-bottom: 20px;
   }
+  /* Order Type Badges */
+.order-type-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.guest-badge {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.collect-badge {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.regular-badge {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+/* Order Type Indicators in Table */
+.order-type-indicators {
+  display: flex;
+  gap: 4px;
+}
+
+.order-type-indicators span {
+  font-size: 14px;
+  cursor: help; /* Shows tooltip on hover */
+}
   
   .order-header h1 {
     display: flex;
