@@ -29,7 +29,7 @@ body {
   background-color: #f5f7fa;
 }
 
-.dashboard-container {
+.product-dashboard-container {
   display: flex;
   min-height: 100vh;
   transition: padding-left var(--transition-speed);
@@ -44,7 +44,7 @@ body {
   transition: margin-left var(--transition-speed);
 }
 
-.dashboard-container.sidebar-collapsed .dashboard-main {
+.product-dashboard-container.sidebar-collapsed .dashboard-main {
   margin-left: var(--sidebar-collapsed-width);
 }
 
@@ -477,7 +477,7 @@ body {
     margin-left: 0;
   }
 
-  .dashboard-container.sidebar-collapsed .dashboard-main {
+  .product-dashboard-container.sidebar-collapsed .dashboard-main {
     margin-left: 0;
   }
 }
@@ -1346,4 +1346,43 @@ body {
     white-space: nowrap;
     color: #e74c3c;
     font-weight: bold;
+}
+
+/* View button styles */
+.btn-icon.btn-view {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-icon.btn-view:hover {
+    background: #059669;
+}
+
+.btn-icon.btn-view:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Action buttons container adjustments */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Responsive adjustments for action buttons */
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .btn-icon {
+        padding: 6px;
+    }
 }

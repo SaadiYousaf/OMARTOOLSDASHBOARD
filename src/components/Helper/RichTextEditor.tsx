@@ -24,7 +24,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     // Safe mode disabled to allow pasting
     safeMode: false,
     
-    // Proper cleanHTML configuration
+    // Enhanced cleanHTML configuration for better link support
     cleanHTML: {
       allowTags: {
         p: true,
@@ -47,8 +47,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         th: true,
         thead: true,
         tbody: true,
-        a: true,
-        img: true,
+        a: {
+          href: true,
+          target: true,
+          rel: true,
+          title: true
+        },
+        img: {
+          src: true,
+          alt: true,
+          title: true
+        },
         blockquote: true
       },
       removeEmptyElements: false,
@@ -58,39 +67,79 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     // Disable problematic plugins
     disablePlugins: ['pasteStorage'],
     
+    // Enhanced link configuration
+    link: {
+      noFollowCheckbox: true,
+      openInNewTabCheckbox: true,
+      processPastedLink: true,
+      mode: 'popup' // 'popup' or 'inline'
+    },
+    
     // Process paste events - simplified
     processPaste: (e: ClipboardEvent, html: string): string => {
       console.log('Paste content received, length:', html.length);
       return html; // Return original HTML without modification
     },
     
-    // Toolbar configuration
+    // Enhanced Toolbar configuration with better link controls
     buttons: [
       'bold', 'italic', 'underline', 'strikethrough',
       '|',
-      'ul', 'ol',
+      'ul', 'ol', 'outdent', 'indent',
       '|', 
-      'outdent', 'indent',
+      'font', 'fontsize', 'brush', 'paragraph',
       '|',
-      'font', 'fontsize',
+      'link', // Enhanced link button
       '|',
-      'link', 'image',
+      'image', 'file',
       '|',
-      'align',
+      'align', 'lineHeight',
       '|',
       'undo', 'redo',
       '|',
-      'preview'
+      'preview', 'fullsize'
     ],
     
+    // Toolbar adaptive configuration
+    toolbarAdaptive: false,
+    
+    // Show toolbar always
+    showTooltip: true,
+    toolbarButtonSize: 'middle',
+    
+    // Upload configuration
     uploader: {
-      insertImageAsBase64URI: true
+      insertImageAsBase64URI: true,
+      imagesExtensions: ['jpg', 'png', 'jpeg', 'gif', 'webp']
     },
     
+    // Events for better link handling
+    events: {
+      afterInit: function (editor: any) {
+        console.log('Jodit Editor initialized');
+      },
+      
+      // Handle link clicks in editor
+      processPaste: function (event: ClipboardEvent, html: string) {
+        console.log('Processing paste with links');
+        return html;
+      }
+    },
+    
+    // Style configuration
     style: {
       fontFamily: 'inherit',
       fontSize: '14px'
-    }
+    },
+    
+    // Language
+    language: 'en',
+    
+    // Spellcheck
+    spellcheck: true,
+    
+    // Cursor after the link
+    cursorAfterAutocomplete: true
   };
 
   // Force paste method as backup
@@ -121,6 +170,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   };
 
+  // Handle editor change
+  const handleChange = (newValue: string) => {
+    onChange(newValue);
+  };
+
   return (
     <div className="rich-text-editor">
       {/* Paste Control Section */}
@@ -149,9 +203,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           </button>
           
           <div style={{ fontSize: '13px', color: '#666' }}>
-            <div><strong>Or try:</strong> Ctrl+V in the editor below</div>
+            <div><strong>How to add links:</strong></div>
             <div style={{ fontSize: '12px', marginTop: '4px' }}>
-              Use the button above if direct pasting doesn't work
+              1. Select text → Click link icon → Enter URL<br/>
+              2. Choose "Open in new tab" if needed
             </div>
           </div>
         </div>
@@ -161,7 +216,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <JoditEditor
         ref={editorRef}
         value={value}
-        onBlur={(newValue: string) => onChange(newValue)}
+        onBlur={handleChange}
+        onChange={handleChange}
       />
       
       {/* Status Info */}
@@ -170,10 +226,31 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         fontSize: '12px', 
         color: '#6c757d',
         display: 'flex',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '8px'
       }}>
         <span>Characters: {value.length}</span>
-        <span>Paste using the green button above</span>
+        <span>Links: {(value.match(/<a\s+href=/g) || []).length} hyperlinks detected</span>
+        <span>Use the link button in toolbar</span>
+      </div>
+
+      {/* Link Usage Instructions */}
+      <div style={{
+        marginTop: '12px',
+        padding: '8px 12px',
+        background: '#e7f3ff',
+        border: '1px solid #b3d9ff',
+        borderRadius: '4px',
+        fontSize: '12px'
+      }}>
+        <strong>💡 Link Tips:</strong>
+        <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
+          <li>Select text and click the <strong>link icon</strong> in toolbar</li>
+          <li>Use "Open in new tab" for external links</li>
+          <li>Use "No follow" for SEO optimization</li>
+          <li>Links will work on your live website</li>
+        </ul>
       </div>
     </div>
   );

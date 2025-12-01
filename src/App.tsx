@@ -7,6 +7,7 @@ import ProductManagement from './components/ProductManagement/ProductManagement'
 import OrderManagement from './components/OrderManagement/OrderManagement';
 import AdminLogin from './components/Admin/AdminLogin';
 import ProductList from './components/ProductList/ProductList';
+import AdminDashboard from './components/AdminDashboard/AdminDashboard'; 
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -43,36 +44,9 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route 
-          path="/admin/login" 
-          element={
-            !isAuthenticated ? 
-            <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} /> : 
-            <Navigate to="/orders" replace />
-          } 
-        />
-        <Route 
-          path="/orders" 
-          element={
-            isAuthenticated ? 
-            <OrderManagement onLogout={handleLogout} /> : // Pass logout function
-            <Navigate to="/admin/login" replace />
-          } 
-        />
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated ? 
-            <Navigate to="/orders" replace /> : 
-            <Navigate to="/admin/login" replace />
-          } 
-        />
-      </Routes>
-      
-      {isAuthenticated && (
-        <ProductServiceProvider>
-          <div className="App">
+      <ProductServiceProvider>
+        <div className="App">
+          {isAuthenticated && (
             <header className="App-header">
               <h1>Omer Tools - Product Management System</h1>
               {/* Add logout button in header */}
@@ -80,16 +54,71 @@ function App() {
                 Logout
               </button>
             </header>
-            <main>
-              <ProductManagement />
-              {/* <ProductList/> */}
-            </main>
-          </div>
-        </ProductServiceProvider>
-      )}
+          )}
+          
+          <main>
+            <Routes>
+              {/* Public routes */}
+              <Route 
+                path="/admin/login" 
+                element={
+                  !isAuthenticated ? 
+                  <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} /> : 
+                  <Navigate to="/admin/dashboard" replace />
+                } 
+              />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/admin/dashboard" 
+                element={
+                  isAuthenticated ? 
+                  <AdminDashboard onLogout={handleLogout} /> : 
+                  <Navigate to="/admin/login" replace />
+                } 
+              />
+              
+              <Route 
+                path="/orders" 
+                element={
+                  isAuthenticated ? 
+                  <OrderManagement onLogout={handleLogout} /> : 
+                  <Navigate to="/admin/login" replace />
+                } 
+              />
+              
+              <Route 
+                path="/products" 
+                element={
+                  isAuthenticated ? 
+                  <ProductManagement /> : 
+                  <Navigate to="/admin/login" replace />
+                } 
+              />
+              
+              {/* Default redirects */}
+              <Route 
+                path="/" 
+                element={
+                  isAuthenticated ? 
+                  <Navigate to="/admin/dashboard" replace /> : 
+                  <Navigate to="/admin/login" replace />
+                } 
+              />
+              
+              {/* Catch all route */}
+              <Route 
+                path="*" 
+                element={
+                  <Navigate to={isAuthenticated ? "/admin/dashboard" : "/admin/login"} replace />
+                } 
+              />
+            </Routes>
+          </main>
+        </div>
+      </ProductServiceProvider>
     </BrowserRouter>
   );
-
 }
 
 export default App;

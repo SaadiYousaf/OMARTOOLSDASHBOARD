@@ -1,9 +1,9 @@
 import React from 'react';
-import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight,FiShoppingBag } from 'react-icons/fi';
 
 interface DashboardSidebarProps {
-  activeTab: 'product' | 'brand' | 'category' | 'subcategory';
-  onTabChange: (tab: 'product' | 'brand' | 'category' | 'subcategory') => void;
+  activeTab: 'order' | 'product' | 'brand' | 'category' | 'subcategory';
+  onTabChange: (tab: 'order' | 'product' | 'brand' | 'category' | 'subcategory') => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -24,6 +24,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       </div>
       <nav className="sidebar-nav">
         <ul>
+           <li className={activeTab === 'order' ? 'active' : ''}>
+            <button onClick={() => onTabChange('order')}>
+              <FiShoppingBag />
+              {!collapsed && <span>Order Management</span>}
+            </button>
+          </li>
           <li className={activeTab === 'product' ? 'active' : ''}>
             <button onClick={() => onTabChange('product')}>
               <FiHome />

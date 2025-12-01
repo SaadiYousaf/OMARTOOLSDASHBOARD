@@ -20,6 +20,18 @@ export interface Product {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+      // SEO Fields
+    metaTitle?: string;
+    metaDescription?: string;
+    metaKeywords?: string;
+    canonicalUrl?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+    ogImage?: string;
+    twitterCard?: string;
+    twitterTitle?: string;
+    twitterDescription?: string;
+    twitterImage?: string;
   images?: ProductImage[];
   variants?: ProductVariant[];
 }

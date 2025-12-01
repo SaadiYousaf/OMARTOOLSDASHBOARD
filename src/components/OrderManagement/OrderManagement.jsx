@@ -160,7 +160,7 @@ const OrderManagement = ({ onLogout }) => {
       </div>
 
       <div className="filters">
-        <div className="search-box">
+        <div className="order-search-box">
           <FiSearch />
           <input
             type="text"
@@ -404,6 +404,14 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
               <div className="info-group">
                 <label>Name:</label>
                 <span>{order.shippingAddress.fullName}</span>
+              </div>
+               <div className="info-group">
+                <label>Phone:</label>
+                <span>{order.shippingAddress.phoneNumber}</span>
+              </div>
+               <div className="info-group">
+                <label>Email:</label>
+                <span>{order.user.email}</span>
               </div>
               <div className="info-group">
                 <label>Address:</label>

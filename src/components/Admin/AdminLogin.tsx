@@ -128,9 +128,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             </div>
           )}
 
-          <div className="form-group">
+          <div className="admin-form-group">
             <label htmlFor="email">Email</label>
-            <div className="input-with-icon">
+            <div className="admin-input-with-icon">
               <FiMail />
               <input
                 type="email"
@@ -144,9 +144,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="admin-form-group">
             <label htmlFor="password">Password</label>
-            <div className="input-with-icon">
+            <div className="admin-input-with-icon">
               <FiLock />
               <input
                 type="password"
@@ -172,7 +172,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
         {/* Debug information - remove in production */}
         <div style={{marginTop: '20px', fontSize: '12px', color: '#666'}}>
           <p>Try logging in with:</p>
-          <p>Email: saadsaqib869@gmail.com</p>
+          <p>Your Credentials</p>
           <p>Role: SuperAdmin</p>
         </div>
       </div>
