@@ -8,6 +8,7 @@ import SubcategoryManagement from '../Subcategory/SubcategoryManagement';
 import DashboardHeader from './DashboardHeader';
 import StatsCard from './StatsCard';
 import RichTextEditor from '../Helper/RichTextEditor';
+import ErrorModal from '../ErrorModel/ErrorModal';
 import {
     FiBox, FiTruck, FiCheckCircle, FiXCircle,
     FiFilter, FiRefreshCw, FiEye,
@@ -17,6 +18,7 @@ import { slugUtils } from '../Utils/slugUtil';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
 const API_BASE_IMG_URL = process.env.REACT_APP_BASE_IMG_URL
 const FRONTEND_BASE_URL = process.env.REACT_APP_FRONTEND_BASE_URL || 'http://localhost:3000';
+
 const ProductManagement = () => {
 
     // State for all data entities
@@ -24,7 +26,8 @@ const ProductManagement = () => {
     const [brands, setBrands] = useState<BrandDto[]>([]);
     const [subcategories, setSubcategories] = useState<SubcategoryDto[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
-
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorModalMessage, setErrorModalMessage] = useState('');
     // UI state management
     const [activeProductTab, setActiveProductTab] = useState<'list' | 'form'>('list');
 
@@ -453,8 +456,19 @@ const ProductManagement = () => {
             });
 
             if (!productResponse.ok) {
-                const errorData = await productResponse.json();
-                throw new Error(errorData.message || `Failed to ${currentProduct.id ? 'update' : 'create'} product`);
+                 const errorText = await productResponse.text();
+      
+      // Check if it's a duplicate product error
+      if (productResponse.status === 400) {
+        // Show modal for duplicate product error
+        setErrorModalMessage(errorText);
+        setShowErrorModal(true);
+      } else {
+        // For other errors, use the inline error display
+        setError(errorText);
+      }
+      
+      throw new Error(errorText);
             }
 
             const responseData = await productResponse.json();
@@ -1359,7 +1373,18 @@ const ProductManagement = () => {
                         </div>
                     </>
                 </div>
+                
             </div>
+             <ErrorModal
+      isOpen={showErrorModal}
+      onClose={() => {
+        setShowErrorModal(false);
+        setErrorModalMessage(''); // Optional: clear the message when closing
+      }}
+      title="Duplicate Product"
+      message={errorModalMessage}
+      type="error"
+    />
         </div>
     );
 };
