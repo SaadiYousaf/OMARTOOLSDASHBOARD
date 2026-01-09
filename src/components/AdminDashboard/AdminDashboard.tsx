@@ -9,13 +9,14 @@ import CategoryManagement from '../Category/CategoryManagement';
 import SubcategoryManagement from '../Subcategory/SubcategoryManagement';
 import './AdminDashboard.css';
 import { CategoryDto } from '../../types/product';
+import BlogManagement from '../BlogManagement/BlogManagement';
 
 interface AdminDashboardProps {
   onLogout: () => void;
 }
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'order' | 'product' | 'brand' | 'category' | 'subcategory'>('order');
+  const [activeTab, setActiveTab] = useState<'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'>('order');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
    const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +27,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       case 'brand': return 'Brand Management';
       case 'category': return 'Category Management';
       case 'subcategory': return 'Subcategory Management';
+      case 'blog': return 'Blog Management';
       default: return 'Admin Dashboard';
     }
   };
@@ -91,6 +93,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                categories={categories} // You'll need to pass categories here or fetch them in SubcategoryManagement
               onSubcategoryCreated={refreshData} 
             />
+          )}
+           {activeTab === 'blog' && ( 
+            <BlogManagement onLogout={onLogout} />
           )}
         </div>
       </div>

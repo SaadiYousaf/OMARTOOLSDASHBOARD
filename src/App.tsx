@@ -1,13 +1,15 @@
 // App.tsx
 import React, { useState, useEffect } from 'react';
 import { ProductServiceProvider } from './context/ProductServiceContext';
-import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
+import { Routes, Route, BrowserRouter, Navigate,Link } from "react-router-dom";
 import './App.css';
 import ProductManagement from './components/ProductManagement/ProductManagement';
 import OrderManagement from './components/OrderManagement/OrderManagement';
 import AdminLogin from './components/Admin/AdminLogin';
 import ProductList from './components/ProductList/ProductList';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard'; 
+import BlogManagement from './components/BlogManagement/BlogManagement';
+import BlogEditor from './components/BlogManagement/BlogEditor';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -95,7 +97,33 @@ function App() {
                   <Navigate to="/admin/login" replace />
                 } 
               />
+               {/* BLOG ROUTES - ADD THESE */}
+              <Route 
+                path="/admin/blog" 
+                element={
+                  isAuthenticated ? 
+                  <BlogManagement onLogout={handleLogout} /> : 
+                  <Navigate to="/admin/login" replace />
+                } 
+              />
               
+              <Route 
+                path="/admin/blog/create" 
+                element={
+                  isAuthenticated ? 
+                  <BlogEditor /> : 
+                  <Navigate to="/admin/login" replace />
+                } 
+              />
+              
+              <Route 
+                path="/admin/blog/edit/:id" 
+                element={
+                  isAuthenticated ? 
+                  <BlogEditor /> : 
+                  <Navigate to="/admin/login" replace />
+                } 
+              />
               {/* Default redirects */}
               <Route 
                 path="/" 
