@@ -1,9 +1,9 @@
 import React from 'react';
-import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight,FiShoppingBag, FiBook } from 'react-icons/fi';
+import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight,FiShoppingBag, FiBook, FiClipboard } from 'react-icons/fi';
 
 interface DashboardSidebarProps {
-  activeTab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog';
-  onTabChange: (tab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog') => void;
+  activeTab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty';
+  onTabChange: (tab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty') => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -61,6 +61,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     {!collapsed && <span>Blog Management</span>}
   </button>
 </li>
+          </li>
+          <li className={activeTab === 'warranty' ? 'active' : ''}>
+            <button onClick={() => onTabChange('warranty')}>
+              <FiClipboard />
+              {!collapsed && <span>Warranty Claims</span>}
+            </button>
           </li>
         </ul>
       </nav>

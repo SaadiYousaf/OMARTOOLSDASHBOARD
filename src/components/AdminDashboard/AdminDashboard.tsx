@@ -10,13 +10,14 @@ import SubcategoryManagement from '../Subcategory/SubcategoryManagement';
 import './AdminDashboard.css';
 import { CategoryDto } from '../../types/product';
 import BlogManagement from '../BlogManagement/BlogManagement';
+import WarrantyClaimManagement from '../WarrantyClaimManagement/WarrantyClaimManagement';
 
 interface AdminDashboardProps {
   onLogout: () => void;
 }
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'>('order');
+  const [activeTab, setActiveTab] = useState<'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog' | 'warranty'>('order');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
    const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +29,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       case 'category': return 'Category Management';
       case 'subcategory': return 'Subcategory Management';
       case 'blog': return 'Blog Management';
+      case 'warranty': return 'Warranty Claim Management';
       default: return 'Admin Dashboard';
     }
   };
@@ -97,6 +99,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
            {activeTab === 'blog' && ( 
             <BlogManagement onLogout={onLogout} />
           )}
+           {activeTab === 'warranty' && ( // Add this
+    <WarrantyClaimManagement />
+  )}
         </div>
       </div>
     </div>
