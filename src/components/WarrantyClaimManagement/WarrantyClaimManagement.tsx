@@ -13,7 +13,7 @@ import {
   FiCalendar, FiPackage, FiClipboard, FiAlertCircle,
   FiCheckCircle, FiClock, FiXCircle, FiArchive,
   FiChevronRight,
-  FiChevronLeft
+  FiChevronLeft,FiUpload,FiFileText
 } from 'react-icons/fi';
 import StatsCard from '../ProductManagement/StatsCard';
 import DashboardHeader from '../ProductManagement/DashboardHeader';
@@ -29,7 +29,7 @@ const WarrantyClaimManagement: React.FC = () => {
     totalClaims: 0,
     submittedCount: 0,
     underReviewCount: 0,
-    approvedCount: 0,
+    SentCount: 0,
     rejectedCount: 0,
     completedCount: 0,
     monthlyStats: []
@@ -38,6 +38,10 @@ const WarrantyClaimManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+const [uploadFile, setUploadFile] = useState<File | null>(null);
+const [isUploading, setIsUploading] = useState(false);
+const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,6 +77,8 @@ const [editFormData, setEditFormData] = useState<{
   serial:string;
   FaultDesc:string;
   commonFaultDescription: string;
+   proofMethod: string; 
+  invoiceNumber: string; 
   products: Array<{
     id?: string;
     modelNumber: string;
@@ -89,6 +95,8 @@ const [editFormData, setEditFormData] = useState<{
   model:'',
   serial:'',
   FaultDesc:'',
+  proofMethod:'',
+  invoiceNumber:'',
   products: []
 });
 
@@ -105,12 +113,9 @@ const handleDownloadImage = async (image: WarrantyClaimImageDto) => {
     }
     
     
-    // Use API endpoint WITHOUT credentials
     const apiUrl = `${API_BASE_URL}/warrantyclaims/fault/${filename}`;
     const response = await fetch(apiUrl, {
       method: 'GET',
-      // REMOVE credentials: 'include' - it's causing the CORS issue
-      // credentials: 'include'  // ❌ Remove this line
     });
     
     
@@ -148,15 +153,12 @@ const handleDownloadImage = async (image: WarrantyClaimImageDto) => {
     
   } catch (error) {
     
-    // Fallback: Try direct download without API
     try {
       const imageUrl = image.imageUrl;
       const filename = imageUrl.split('/').pop();
       if (filename) {
-        // Try without API endpoint
         const directUrl = `${window.location.origin}/api/warrantyclaims/fault/${filename}`;
         
-        // Create iframe for download
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = directUrl;
@@ -174,25 +176,194 @@ const handleDownloadImage = async (image: WarrantyClaimImageDto) => {
   }
 };
 
+const handleEditInvoiceNumber = () => {
+  if (!selectedClaim) return;
+  
+  const currentInvoice = selectedClaim.invoiceNumber || '';
+  const newInvoiceNumber = prompt('Enter new invoice number:', currentInvoice);
+  
+  if (newInvoiceNumber !== null) {
+    handleUpdateInvoiceNumber(newInvoiceNumber);
+  }
+};
+
+// Function to update invoice number
+const handleUpdateInvoiceNumber = async (invoiceNumber: string) => {
+  if (!selectedClaim) return;
+
+  setIsLoading(true);
+  try {
+    const response = await fetch(`${API_BASE_URL}/warrantyclaims/${selectedClaim.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        proofMethod: 'invoice',
+        invoiceNumber: invoiceNumber.trim(),
+        // Keep existing data
+        fullName: selectedClaim.fullName,
+        email: selectedClaim.email,
+        phoneNumber: selectedClaim.phoneNumber,
+        address: selectedClaim.address,
+        claimType: selectedClaim.claimType,
+        commonFaultDescription: selectedClaim.commonFaultDescription
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to update invoice number: ${errorText}`);
+    }
+
+    await fetchInitialData();
+    setSuccess('Invoice number updated successfully');
+    
+    // Update the current selected claim
+    const updatedClaim = await response.json();
+    setSelectedClaim(updatedClaim);
+    
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to update invoice number');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handleChangeProofMethod = async (method: string, invoiceNumber?: string) => {
+  if (!selectedClaim) return;
+
+  setIsLoading(true);
+  try {
+    const updateData: any = {
+      proofMethod: method,
+      // Keep existing data
+      fullName: selectedClaim.fullName,
+      email: selectedClaim.email,
+      phoneNumber: selectedClaim.phoneNumber,
+      address: selectedClaim.address,
+      claimType: selectedClaim.claimType,
+      commonFaultDescription: selectedClaim.commonFaultDescription
+    };
+
+    if (method === 'invoice') {
+      if (invoiceNumber) {
+        updateData.invoiceNumber = invoiceNumber;
+      } else if (selectedClaim.invoiceNumber) {
+        updateData.invoiceNumber = selectedClaim.invoiceNumber;
+      }
+    }
+
+    const response = await fetch(`${API_BASE_URL}/warrantyclaims/${selectedClaim.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to change proof method: ${errorText}`);
+    }
+
+    await fetchInitialData();
+    setSuccess(`Proof method changed to ${method}`);
+    
+    // Update the current selected claim
+    const updatedClaim = await response.json();
+    setSelectedClaim(updatedClaim);
+    
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to change proof method');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Function to handle file upload
+const handleFileUpload = async () => {
+  if (!selectedClaim || !uploadFile) return;
+
+  setIsUploading(true);
+  setUploadError(null);
+
+  try {
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+
+    const response = await fetch(`${API_BASE_URL}/warrantyclaims/${selectedClaim.id}/upload-proof`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to upload file');
+    }
+
+    // First, ensure proof method is set to 'upload'
+    await handleChangeProofMethod('upload');
+    
+    // Then refresh data
+    await fetchInitialData();
+    
+    setSuccess('File uploaded successfully');
+    setShowUploadModal(false);
+    setUploadFile(null);
+    
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    setUploadError(err instanceof Error ? err.message : 'Failed to upload file');
+  } finally {
+    setIsUploading(false);
+  }
+};
+
+// Function to handle file selection
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  // Validate file size (5MB max)
+  if (file.size > 5 * 1024 * 1024) {
+    setUploadError('File size must be less than 5MB');
+    return;
+  }
+
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  if (!validTypes.includes(file.type)) {
+    setUploadError('File must be JPG, PNG, or PDF');
+    return;
+  }
+
+  setUploadFile(file);
+  setUploadError(null);
+};
+
+// Function to remove selected file
+const handleRemoveFile = () => {
+  setUploadFile(null);
+  setUploadError(null);
+};
 const handleEditClaim = (claim: WarrantyClaimDto) => {
   setSelectedClaim(claim);
   
-  // Check the original format of the claim
   const hasProducts = claim.products && claim.products.length > 0;
   const isSingleProduct = !hasProducts && (claim.modelNumber || claim.faultDescription);
   
   if (hasProducts) {
-    // This is a multi-product claim - populate ONLY products array
     setEditFormData({
       fullName: claim.fullName,
       email: claim.email,
       phoneNumber: claim.phoneNumber,
       address: claim.address,
       claimType: claim.claimType,
-      model: '', // DON'T populate single fields
+      model: '', 
       serial: '',
       FaultDesc: '',
       commonFaultDescription: claim.commonFaultDescription || '',
+      proofMethod: claim.proofMethod || '',  
+      invoiceNumber: claim.invoiceNumber || '', 
       products: (claim.products || []).map(product => ({
         id: product.id,
         modelNumber: product.modelNumber,
@@ -212,10 +383,12 @@ const handleEditClaim = (claim: WarrantyClaimDto) => {
       serial: claim.serialNumber || '',
       FaultDesc: claim.faultDescription || '',
       commonFaultDescription: claim.commonFaultDescription || '',
-      products: [] // EMPTY array for single product claims
+      proofMethod: claim.proofMethod || '',  
+      invoiceNumber: claim.invoiceNumber || '',
+      products: [] 
     });
   } else {
-    // Fallback for claims with no product data (shouldn't happen)
+   
     setEditFormData({
       fullName: claim.fullName,
       email: claim.email,
@@ -226,6 +399,8 @@ const handleEditClaim = (claim: WarrantyClaimDto) => {
       serial: '',
       FaultDesc: '',
       commonFaultDescription: claim.commonFaultDescription || '',
+        proofMethod: claim.proofMethod || '',  
+      invoiceNumber: claim.invoiceNumber || '',
       products: []
     });
   }
@@ -245,10 +420,11 @@ const handleEditSubmit = async () => {
       phoneNumber: editFormData.phoneNumber,
       address: editFormData.address,
       claimType: editFormData.claimType,
-      commonFaultDescription: editFormData.commonFaultDescription
+      commonFaultDescription: editFormData.commonFaultDescription,
+        proofMethod: editFormData.proofMethod,  
+      invoiceNumber: editFormData.invoiceNumber || null 
     };
 
-    // Add product data based on which format is being used
     if (editFormData.products.length > 0) {
       // Multi-product format
       updateData.products = editFormData.products.filter(p => 
@@ -261,7 +437,6 @@ const handleEditSubmit = async () => {
       updateData.legacyFaultDescription = editFormData.FaultDesc;
     }
 
-    console.log('Sending update:', updateData); // For debugging
 
     const response = await fetch(`${API_BASE_URL}/warrantyclaims/${selectedClaim.id}`, {
       method: 'PUT',
@@ -525,7 +700,7 @@ const handlePrevImage = () => {
         totalClaims: 0,
         submittedCount: 0,
         underReviewCount: 0,
-        approvedCount: 0,
+        SentCount: 0,
         rejectedCount: 0,
         completedCount: 0,
         monthlyStats: []
@@ -540,7 +715,7 @@ const handlePrevImage = () => {
       totalClaims: claimsList.length,
       submittedCount: claimsList.filter(c => c.status === 'submitted').length,
       underReviewCount: claimsList.filter(c => c.status === 'picked_up').length,
-      approvedCount: claimsList.filter(c => c.status === 'approved').length,
+      SentCount: claimsList.filter(c => c.status === 'Sent').length,
       rejectedCount: claimsList.filter(c => c.status === 'rejected').length,
       completedCount: claimsList.filter(c => c.status === 'completed').length,
       monthlyStats: []
@@ -553,7 +728,7 @@ const handlePrevImage = () => {
     const statusConfig = {
       submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-800', icon: <FiClock /> },
       picked_up: { label: 'Picked Up', color: 'bg-yellow-100 text-yellow-800', icon: <FiAlertCircle /> },
-      approved: { label: 'Approved', color: 'bg-green-100 text-green-800', icon: <FiCheckCircle /> },
+      Sent: { label: 'Sent', color: 'bg-green-100 text-green-800', icon: <FiCheckCircle /> },
       rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800', icon: <FiXCircle /> },
       completed: { label: 'Completed', color: 'bg-purple-100 text-purple-800', icon: <FiArchive /> }
     };
@@ -722,8 +897,8 @@ const handlePrevImage = () => {
           trend="up"
         />
         <StatsCard
-          title="Approved"
-          value={stats.approvedCount}
+          title="Sent"
+          value={stats.SentCount}
           icon={<FiCheckCircle />}
           trend="up"
         />
@@ -766,7 +941,7 @@ const handlePrevImage = () => {
                 <option value="all">All Status</option>
                 <option value="submitted">Submitted</option>
                 <option value="picked_up">Picked Up</option>
-                <option value="approved">Approved</option>
+                <option value="Sent">Sent</option>
                 <option value="rejected">Rejected</option>
                 <option value="completed">Completed</option>
               </select>
@@ -1076,7 +1251,7 @@ const handlePrevImage = () => {
                 >
                   <option value="submitted">Submitted</option>
                   <option value="picked_up">Picked Up</option>
-                  <option value="approved">Approved</option>
+                  <option value="Sent">Sent</option>
                   <option value="rejected">Rejected</option>
                   <option value="completed">Completed</option>
                 </select>
@@ -1225,21 +1400,116 @@ const handlePrevImage = () => {
                   </div>
                 )}
                 
-                {selectedClaim.proofOfPurchasePath && (
-                  <div className="detail-section">
-                    <h4>Proof of Purchase</h4>
-                    <div className="file-attachment">
-                      <FiDownload />
-                      <a 
-                        href={API_BASE_IMG_URL + selectedClaim.proofOfPurchasePath}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {selectedClaim.proofOfPurchaseFileName}
-                      </a>
-                    </div>
-                  </div>
-                )}
+{selectedClaim.claimType !== 'service-repair' && (
+  <div className="detail-section">
+    <div className="section-header-with-actions">
+      <h4><FiClipboard /> Proof of Purchase</h4>
+      <div className="section-actions">
+        <button
+          className="btn btn-sm btn-secondary"
+          onClick={() => setShowUploadModal(true)}
+        >
+          <FiUpload /> {selectedClaim.proofMethod === 'upload' ? 'Replace File' : 'Upload File'}
+        </button>
+      </div>
+    </div>
+    
+    {selectedClaim.proofMethod === 'upload' && selectedClaim.proofOfPurchasePath ? (
+      <div className="proof-info">
+        <div className="proof-header">
+          <span className="badge badge-blue">Document Upload</span>
+          <div className="proof-actions">
+            <button
+              className="btn-icon btn-sm"
+              onClick={() => setShowUploadModal(true)}
+              title="Replace file"
+            >
+              <FiEdit />
+            </button>
+            <button
+              className="btn-icon btn-sm"
+              onClick={() => handleChangeProofMethod('invoice')}
+              title="Switch to Invoice Number"
+            >
+              <FiRefreshCw />
+            </button>
+          </div>
+        </div>
+        <p><strong>File:</strong> {selectedClaim.proofOfPurchaseFileName}</p>
+        <div className="file-attachment">
+          <FiDownload />
+          <a 
+            href={API_BASE_IMG_URL + selectedClaim.proofOfPurchasePath}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Download Proof
+          </a>
+        </div>
+      </div>
+    ) : selectedClaim.proofMethod === 'invoice' && selectedClaim.invoiceNumber ? (
+      <div className="proof-info">
+        <div className="proof-header">
+          <span className="badge badge-green">Invoice Number</span>
+          <div className="proof-actions">
+            <button
+              className="btn-icon btn-sm"
+              onClick={handleEditInvoiceNumber}
+              title="Edit Invoice Number"
+            >
+              <FiEdit />
+            </button>
+            <button
+              className="btn-icon btn-sm"
+              onClick={() => setShowUploadModal(true)}
+              title="Switch to File Upload"
+            >
+              <FiRefreshCw />
+            </button>
+          </div>
+        </div>
+        <p><strong>Invoice #:</strong> <code className="invoice-number">{selectedClaim.invoiceNumber}</code></p>
+        <p className="last-updated">
+          {selectedClaim.updatedAt && `Updated: ${formatDate(selectedClaim.updatedAt)}`}
+        </p>
+      </div>
+    ) : selectedClaim.proofMethod ? (
+      <div className="proof-info">
+        <p><strong>Method:</strong> <span className="badge badge-gray">{selectedClaim.proofMethod}</span></p>
+        {selectedClaim.proofMethod === 'invoice' && !selectedClaim.invoiceNumber && (
+          <div className="no-invoice-section">
+            <p className="text-warning">No invoice number provided</p>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={handleEditInvoiceNumber}
+            >
+              <FiEdit /> Add Invoice Number
+            </button>
+          </div>
+        )}
+      </div>
+    ) : (
+      <div className="no-proof-section">
+        <p className="text-muted">No proof method specified</p>
+        <div className="proof-method-options">
+          <button
+            className="btn btn-sm btn-secondary"
+            onClick={() => setShowUploadModal(true)}
+          >
+            <FiUpload /> Upload File
+          </button>
+          <span className="or-text">or</span>
+          <button
+            className="btn btn-sm btn-secondary"
+            onClick={handleEditInvoiceNumber}
+          >
+            <FiFileText /> Enter Invoice
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+)}
                 
 {selectedClaim.faultImages.length > 0 && (
   <div className="detail-section full-width">
@@ -1296,6 +1566,7 @@ const handlePrevImage = () => {
         </div>
       ))}
     </div>
+
   </div>
 )}
               </div>
@@ -1595,6 +1866,54 @@ const handlePrevImage = () => {
             </div> */}
           </div>
         )}
+        {editFormData.claimType !== 'service-repair' && (
+          <div className="form-section">
+            <h4><FiClipboard /> Proof of Purchase</h4>
+            
+            <div className="form-group">
+              <label>Proof Method</label>
+              <select
+                value={editFormData.proofMethod}
+                onChange={(e) => setEditFormData({...editFormData, proofMethod: e.target.value})}
+              >
+                <option value="">Select proof method</option>
+                <option value="upload">Document Upload</option>
+                <option value="invoice">Invoice Number</option>
+              </select>
+            </div>
+            
+            {editFormData.proofMethod === 'invoice' && (
+              <div className="form-group">
+                <label>Invoice Number *</label>
+                <input
+                  type="text"
+                  value={editFormData.invoiceNumber}
+                  onChange={(e) => setEditFormData({...editFormData, invoiceNumber: e.target.value})}
+                  placeholder="Enter invoice number"
+                />
+              </div>
+            )}
+            
+            {editFormData.proofMethod === 'upload' && selectedClaim.proofOfPurchasePath && (
+              <div className="form-group">
+                <label>Uploaded Document</label>
+                <div className="file-attachment-display">
+                  <FiDownload />
+                  <span>{selectedClaim.proofOfPurchaseFileName}</span>
+                  <a 
+                    href={API_BASE_IMG_URL + selectedClaim.proofOfPurchasePath}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-link"
+                  >
+                    View
+                  </a>
+                </div>
+                <p className="form-help">Note: To change uploaded document, please update from view section under proof of purchase</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="modal-footer">
         <button
@@ -1610,6 +1929,149 @@ const handlePrevImage = () => {
           disabled={isLoading}
         >
           {isLoading ? 'Updating...' : 'Update Claim'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    {/* File Upload Modal */}
+{showUploadModal && selectedClaim && (
+  <div className="modal-overlay">
+    <div className="modal">
+      <div className="modal-header">
+        <h3>
+          {selectedClaim.proofMethod === 'upload' ? 'Replace Proof of Purchase' : 'Upload Proof of Purchase'}
+        </h3>
+        <button 
+          className="modal-close" 
+          onClick={() => {
+            setShowUploadModal(false);
+            setUploadFile(null);
+            setUploadError(null);
+          }}
+        >
+          <FiX />
+        </button>
+      </div>
+      <div className="modal-body">
+        <div className="upload-instructions">
+          <p><strong>Claim:</strong> {selectedClaim.claimNumber}</p>
+          <p><strong>Customer:</strong> {selectedClaim.fullName}</p>
+          
+          {selectedClaim.proofMethod === 'upload' && selectedClaim.proofOfPurchasePath && (
+            <div className="current-file-info">
+              <p><strong>Current File:</strong> {selectedClaim.proofOfPurchaseFileName}</p>
+              <a 
+                href={API_BASE_IMG_URL + selectedClaim.proofOfPurchasePath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-link"
+              >
+                <FiEye /> View Current
+              </a>
+            </div>
+          )}
+        </div>
+
+        <div className="file-upload-area">
+          {!uploadFile ? (
+            <div className="upload-placeholder">
+              <input
+                type="file"
+                id="proofUpload"
+                onChange={handleFileChange}
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="file-input"
+              />
+              <label htmlFor="proofUpload" className="upload-label">
+                <div className="upload-icon">
+                  <FiUpload size={48} />
+                </div>
+                <p className="upload-title">Click to select file</p>
+                <p className="upload-subtitle">JPG, PNG, or PDF up to 5MB</p>
+              </label>
+            </div>
+          ) : (
+            <div className="uploaded-file-preview">
+              <div className="file-preview-header">
+                <FiFileText size={24} />
+                <div className="file-info">
+                  <span className="file-name">{uploadFile.name}</span>
+                  <span className="file-size">
+                    {(uploadFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </span>
+                </div>
+                <button 
+                  className="btn-icon btn-delete"
+                  onClick={handleRemoveFile}
+                  title="Remove file"
+                >
+                  <FiTrash2 />
+                </button>
+              </div>
+              
+              {/* Show PDF preview */}
+              {uploadFile.type === 'application/pdf' && (
+                <div className="pdf-preview">
+                  <FiFileText size={48} />
+                  <span>PDF Document</span>
+                </div>
+              )}
+              
+              {/* Show image preview */}
+              {uploadFile.type.startsWith('image/') && (
+                <div className="image-preview">
+                  <img 
+                    src={URL.createObjectURL(uploadFile)} 
+                    alt="Preview"
+                    onLoad={(e) => URL.revokeObjectURL(e.currentTarget.src)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="alert alert-error alert-sm">
+              <FiAlertCircle />
+              <span>{uploadError}</span>
+            </div>
+          )}
+
+          <div className="upload-note">
+            <p><strong>Note:</strong> Uploading a file will change the proof method to "Document Upload".</p>
+            <p>The previous proof method (if any) will be replaced.</p>
+          </div>
+        </div>
+      </div>
+      <div className="modal-footer">
+        <button
+          className="btn btn-secondary"
+          onClick={() => {
+            setShowUploadModal(false);
+            setUploadFile(null);
+            setUploadError(null);
+          }}
+          disabled={isUploading}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn btn-primary"
+          onClick={handleFileUpload}
+          disabled={!uploadFile || isUploading}
+        >
+          {isUploading ? (
+            <>
+              <span className="spinner"></span>
+              Uploading...
+            </>
+          ) : (
+            <>
+              <FiUpload />
+              Upload File
+            </>
+          )}
         </button>
       </div>
     </div>

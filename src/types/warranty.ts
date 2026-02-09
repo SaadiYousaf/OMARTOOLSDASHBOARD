@@ -11,7 +11,9 @@ export interface WarrantyClaimDto {
   modelNumber: string;
   serialNumber: string;
   faultDescription: string;
-  status: 'submitted' | 'picked_up' | 'approved' | 'rejected' | 'completed';
+  proofMethod?: string; 
+  invoiceNumber?: string;
+  status: 'submitted' | 'picked_up' | 'Sent' | 'rejected' | 'completed';
   statusNotes: string;
   assignedTo: string;
   createdAt: string;
@@ -62,7 +64,7 @@ export interface CreateWarrantyClaimDto {
 }
 
 export interface UpdateWarrantyClaimStatusDto {
-  status: 'submitted' | 'picked_up' | 'approved' | 'rejected' | 'completed';
+  status: 'submitted' | 'picked_up' | 'Sent' | 'rejected' | 'completed';
   statusNotes: string;
   assignedTo: string;
 }
@@ -71,7 +73,7 @@ export interface WarrantyDashboardStats {
   totalClaims: number;
   submittedCount: number;
   underReviewCount: number;
-  approvedCount: number;
+  SentCount: number;
   rejectedCount: number;
   completedCount: number;
   monthlyStats: MonthlyClaimCount[];
