@@ -52,9 +52,19 @@ const [uploadError, setUploadError] = useState<string | null>(null);
     to: ''
   });
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  interface PaginationMetadata {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+const [pagination, setPagination] = useState<PaginationMetadata>({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  totalPages: 0
+});
   const [previewImage, setPreviewImage] = useState<{ image: WarrantyClaimImageDto; index: number } | null>(null);
 const [downloading, setDownloading] = useState<string | null>(null);
 const [downloadProgress, setDownloadProgress] = useState(0);
@@ -99,6 +109,12 @@ const [editFormData, setEditFormData] = useState<{
   invoiceNumber:'',
   products: []
 });
+const setCurrentPage = (page: number) => {
+  setPagination(prev => ({ ...prev, page }));
+};
+const setItemsPerPage = (pageSize: number) => {
+  setPagination(prev => ({ ...prev, pageSize, page: 1 }));
+};
 
 const handleDownloadImage = async (image: WarrantyClaimImageDto) => {
   setDownloading(image.id);
@@ -626,61 +642,90 @@ const handlePrevImage = () => {
     }
   }, [claims]);
 
-  // Filter claims based on search and filters
   const filteredClaims = useMemo(() => {
-    let results = claims;
+  // Since backend now handles filtering, just return the claims from backend
+  return claims;
+}, [claims]);
+  // Filter claims based on search and filters
+  // const filteredClaims = useMemo(() => {
+  //   let results = claims;
 
-    // Apply search term
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      results = results.filter(claim =>
-        claim.claimNumber.toLowerCase().includes(term) ||
-        claim.fullName.toLowerCase().includes(term) ||
-        claim.email.toLowerCase().includes(term) ||
-        claim.phoneNumber.toLowerCase().includes(term) ||
-        claim.modelNumber.toLowerCase().includes(term) ||
-           (claim.products && claim.products.some(product => 
-      product.modelNumber.toLowerCase().includes(term) ||
-      (product.serialNumber && product.serialNumber.toLowerCase().includes(term))
-    ))  // <-- Fixed: Added closing parenthesis and curly brace
-  );
-    }
+  //   // Apply search term
+  //   if (searchTerm) {
+  //     const term = searchTerm.toLowerCase();
+  //     results = results.filter(claim =>
+  //       claim.claimNumber.toLowerCase().includes(term) ||
+  //       claim.fullName.toLowerCase().includes(term) ||
+  //       claim.email.toLowerCase().includes(term) ||
+  //       claim.phoneNumber.toLowerCase().includes(term) ||
+  //       claim.modelNumber.toLowerCase().includes(term) ||
+  //          (claim.products && claim.products.some(product => 
+  //     product.modelNumber.toLowerCase().includes(term) ||
+  //     (product.serialNumber && product.serialNumber.toLowerCase().includes(term))
+  //   ))  // <-- Fixed: Added closing parenthesis and curly brace
+  // );
+  //   }
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      results = results.filter(claim => claim.status === statusFilter);
-    }
+  //   // Apply status filter
+  //   if (statusFilter !== 'all') {
+  //     results = results.filter(claim => claim.status === statusFilter);
+  //   }
 
-    // Apply claim type filter
-    if (claimTypeFilter !== 'all') {
-      results = results.filter(claim => claim.claimType === claimTypeFilter);
-    }
+  //   // Apply claim type filter
+  //   if (claimTypeFilter !== 'all') {
+  //     results = results.filter(claim => claim.claimType === claimTypeFilter);
+  //   }
 
-    // Apply date range filter
-    if (dateRange.from) {
-      const fromDate = new Date(dateRange.from);
-      results = results.filter(claim => new Date(claim.submittedAt) >= fromDate);
-    }
-    if (dateRange.to) {
-      const toDate = new Date(dateRange.to);
-      results = results.filter(claim => new Date(claim.submittedAt) <= toDate);
-    }
+  //   // Apply date range filter
+  //   if (dateRange.from) {
+  //     const fromDate = new Date(dateRange.from);
+  //     results = results.filter(claim => new Date(claim.submittedAt) >= fromDate);
+  //   }
+  //   if (dateRange.to) {
+  //     const toDate = new Date(dateRange.to);
+  //     results = results.filter(claim => new Date(claim.submittedAt) <= toDate);
+  //   }
 
-    return results;
-  }, [claims, searchTerm, statusFilter, claimTypeFilter, dateRange]);
+  //   return results;
+  // }, [claims, searchTerm, statusFilter, claimTypeFilter, dateRange]);
 
   // Pagination calculations
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentClaims = filteredClaims.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredClaims.length / itemsPerPage);
+const indexOfFirstItem = ((pagination.page - 1) * pagination.pageSize) + 1;
+const indexOfLastItem = Math.min(pagination.page * pagination.pageSize, pagination.total);
+const currentClaims = claims; // Backend already returns paginated data
+const totalPages = pagination.totalPages;
 
   // Main data fetching functions
   const fetchInitialData = async () => {
     setIsLoading(true);
     try {
+    const queryParams = new URLSearchParams({
+      page: pagination.page.toString(),
+      limit: pagination.pageSize.toString(),
+      sortDescending: 'true',
+      sortBy: 'submittedAt'
+    });
+      if (statusFilter !== 'all') {
+      queryParams.append('status', statusFilter);
+    }
+    
+    if (claimTypeFilter !== 'all') {
+      queryParams.append('claimType', claimTypeFilter);
+    }
+    
+    if (searchTerm) {
+      queryParams.append('search', searchTerm);
+    }
+    
+    if (dateRange.from) {
+      queryParams.append('fromDate', dateRange.from);
+    }
+    
+    if (dateRange.to) {
+      queryParams.append('toDate', dateRange.to);
+    }
       const [claimsRes, statsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/warrantyclaims`),
+        fetch(`${API_BASE_URL}/warrantyclaims?${queryParams}`),
         fetch(`${API_BASE_URL}/warrantyclaims/dashboard/stats`)
       ]);
 
@@ -691,6 +736,14 @@ const handlePrevImage = () => {
       const statsData = await statsRes.json();
 
       setClaims(claimsData.data || claimsData);
+    setPagination({
+      page: claimsData.page,
+      pageSize: claimsData.pageSize,
+      total: claimsData.total,
+      totalPages: claimsData.totalPages
+    });
+
+    
       setStats(statsData);
       setError(null);
     } catch (err) {
@@ -710,6 +763,11 @@ const handlePrevImage = () => {
     }
   };
 
+  useEffect(() => {
+  fetchInitialData();
+}, [pagination.page,pagination.pageSize, statusFilter, claimTypeFilter, searchTerm, dateRange.from, 
+  dateRange.to]);
+
   const updateStats = (claimsList: WarrantyClaimDto[]) => {
     const newStats: WarrantyDashboardStats = {
       totalClaims: claimsList.length,
@@ -727,8 +785,8 @@ const handlePrevImage = () => {
   const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     const statusConfig = {
       submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-800', icon: <FiClock /> },
-      picked_up: { label: 'Picked Up', color: 'bg-yellow-100 text-yellow-800', icon: <FiAlertCircle /> },
-      Sent: { label: 'Sent', color: 'bg-green-100 text-green-800', icon: <FiCheckCircle /> },
+      picked_up: { label: 'Picked Up', color: 'bg-green-100 text-green-800', icon: <FiCheckCircle /> },
+      Sent: { label: 'Sent', color: 'bg-green-100 text-green-800', icon: <FiAlertCircle /> },
       rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800', icon: <FiXCircle /> },
       completed: { label: 'Completed', color: 'bg-purple-100 text-purple-800', icon: <FiArchive /> }
     };
@@ -1135,86 +1193,82 @@ const handlePrevImage = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="pagination-container">
-                <div className="pagination-info">
-                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredClaims.length)} 
-                  of {filteredClaims.length} claims
-                </div>
-                <div className="pagination-controls">
-                  <div className="pagination-buttons">
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                      className="pagination-nav"
-                    >
-                      First
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      className="pagination-nav"
-                    >
-                      Previous
-                    </button>
-                    
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-  let pageNum: number; // Add type annotation here
-  
-  if (totalPages <= 5) {
-    pageNum = i + 1;
-  } else if (currentPage <= 3) {
-    pageNum = i + 1;
-  } else if (currentPage >= totalPages - 2) {
-    pageNum = totalPages - 4 + i;
-  } else {
-    pageNum = currentPage - 2 + i;
-  }
-  
-  return (
-    <button
-      key={pageNum}
-      onClick={() => setCurrentPage(pageNum)}
-      className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
-    >
-      {pageNum}
-    </button>
-  );
-})}
-                    
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      className="pagination-nav"
-                    >
-                      Next
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                      className="pagination-nav"
-                    >
-                      Last
-                    </button>
-                  </div>
-                  
-                  <div className="pagination-page-size">
-                    <label>Items per page:</label>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <option value="5">5</option>
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
+  <div className="pagination-container">
+    <div className="pagination-info">
+      Showing {indexOfFirstItem} to {indexOfLastItem}  of {pagination.total} claims
+    </div>
+    <div className="pagination-controls">
+      <div className="pagination-buttons">
+        <button
+          onClick={() => setCurrentPage(1)}
+          disabled={pagination.page === 1}
+          className="pagination-nav"
+        >
+          First
+        </button>
+        <button
+          onClick={() => setCurrentPage(pagination.page - 1)}
+          disabled={pagination.page === 1}
+          className="pagination-nav"
+        >
+          Previous
+        </button>
+        
+        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          let pageNum: number;
+          
+          if (totalPages <= 5) {
+            pageNum = i + 1;
+          } else if (pagination.page <= 3) {
+            pageNum = i + 1;
+          } else if (pagination.page >= totalPages - 2) {
+            pageNum = totalPages - 4 + i;
+          } else {
+            pageNum = pagination.page - 2 + i;
+          }
+          
+          return (
+            <button
+              key={pageNum}
+              onClick={() => setCurrentPage(pageNum)}
+              className={`pagination-number ${pagination.page === pageNum ? 'active' : ''}`}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
+        
+        <button
+          onClick={() => setCurrentPage(pagination.page + 1)}
+          disabled={pagination.page === totalPages}
+          className="pagination-nav"
+        >
+          Next
+        </button>
+        <button
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={pagination.page === totalPages}
+          className="pagination-nav"
+        >
+          Last
+        </button>
+      </div>
+      
+      <div className="pagination-page-size">
+        <label>Items per page:</label>
+        <select
+          value={pagination.pageSize}
+          onChange={(e) => setItemsPerPage(Number(e.target.value))}
+        >
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+    </div>
+  </div>
+)}
           </div>
         </div>
       </div>
