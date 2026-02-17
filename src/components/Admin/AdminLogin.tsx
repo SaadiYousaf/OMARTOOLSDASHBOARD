@@ -1,8 +1,8 @@
 // components/Admin/AdminLogin.tsx
-import React, { useState } from 'react';
-import { FiLock, FiMail, FiAlertCircle } from 'react-icons/fi';
-import './AdminLogin.css';
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL 
+import React, { useState } from "react";
+import { FiLock, FiMail, FiAlertCircle } from "react-icons/fi";
+import "./AdminLogin.css";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 interface AdminLoginProps {
   onLoginSuccess: () => void;
 }
@@ -24,81 +24,85 @@ interface LoginResponse {
 // Function to decode JWT token
 const parseJwt = (token: string) => {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = decodeURIComponent(
       atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (e) {
-    console.error('Error parsing JWT token:', e);
+    console.error("Error parsing JWT token:", e);
     return null;
   }
 };
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   const [credentials, setCredentials] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({
       ...credentials,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch( `${API_BASE_URL}/auth/login`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: credentials.email,
-          password: credentials.password
-        })
+          password: credentials.password,
+        }),
       });
 
       const data: LoginResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.errors?.[0] || 'Login failed');
+        throw new Error(data.errors?.[0] || "Login failed");
       }
 
       // Extract role from JWT token
       const tokenPayload = parseJwt(data.token);
       const userRole = tokenPayload?.role;
-      
-      console.log('Token payload:', tokenPayload);
-      console.log('User role:', userRole);
-      
+
+      console.log("Token payload:", tokenPayload);
+      console.log("User role:", userRole);
+
       // Check if user has admin role (case-insensitive)
-      if (!userRole || (userRole.toLowerCase() !== 'admin' && userRole.toLowerCase() !== 'superadmin')) {
-        throw new Error('Access denied. Admin privileges required.');
+      if (
+        !userRole ||
+        (userRole.toLowerCase() !== "admin" &&
+          userRole.toLowerCase() !== "superadmin")
+      ) {
+        throw new Error("Access denied. Admin privileges required.");
       }
 
       // Store token and user data
-      localStorage.setItem('adminToken', data.token);
-      
+      localStorage.setItem("adminToken", data.token);
+
       // Create user object with role from token
       const userWithRole = {
         ...data.user,
-        role: userRole
+        role: userRole,
       };
-      localStorage.setItem('adminUser', JSON.stringify(userWithRole));
-      
+      localStorage.setItem("adminUser", JSON.stringify(userWithRole));
+
       // Call the success callback
       onLoginSuccess();
     } catch (err) {
@@ -106,7 +110,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('An unexpected error occurred');
+        setError("An unexpected error occurred");
       }
     } finally {
       setIsLoading(false);
@@ -160,17 +164,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+          <button type="submit" className="login-button" disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        
+
         {/* Debug information - remove in production */}
-        <div style={{marginTop: '20px', fontSize: '12px', color: '#666'}}>
+        <div style={{ marginTop: "20px", fontSize: "12px", color: "#666" }}>
           <p>Try logging in with:</p>
           <p>Your Credentials</p>
           <p>Role: SuperAdmin</p>

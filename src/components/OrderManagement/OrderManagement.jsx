@@ -1,11 +1,19 @@
 // OrderManagement.jsx
-import React, { useEffect, useState } from 'react';
-import { 
-  FiBox, FiTruck, FiCheckCircle, FiXCircle, 
-  FiSearch, FiFilter, FiRefreshCw, FiEye,
-  FiEdit, FiArrowLeft, FiArrowRight
-} from 'react-icons/fi';
-import './OrderManagement.css';
+import React, { useEffect, useState } from "react";
+import {
+  FiBox,
+  FiTruck,
+  FiCheckCircle,
+  FiXCircle,
+  FiSearch,
+  FiFilter,
+  FiRefreshCw,
+  FiEye,
+  FiEdit,
+  FiArrowLeft,
+  FiArrowRight,
+} from "react-icons/fi";
+import "./OrderManagement.css";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const OrderManagement = ({ onLogout }) => {
@@ -14,12 +22,12 @@ const OrderManagement = ({ onLogout }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [orderTypeFilter, setOrderTypeFilter] = useState('all');
+  const [orderTypeFilter, setOrderTypeFilter] = useState("all");
 
   // Fetch orders from API
   const fetchOrders = async () => {
@@ -27,17 +35,17 @@ const OrderManagement = ({ onLogout }) => {
       setIsLoading(true);
       // In a real implementation, we would call an admin endpoint to get all orders
       // Since we don't have one, we'll simulate with the user endpoint for demo
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       const response = await fetch(`${API_BASE_URL}/orders/admin`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch orders');
+        throw new Error("Failed to fetch orders");
       }
-      
+
       const data = await response.json();
       setOrders(data);
       setFilteredOrders(data);
@@ -55,62 +63,67 @@ const OrderManagement = ({ onLogout }) => {
   // Apply filters and search
   useEffect(() => {
     let result = orders;
-    
-    if (statusFilter !== 'all') {
-      result = result.filter(order => order.status === statusFilter);
+
+    if (statusFilter !== "all") {
+      result = result.filter((order) => order.status === statusFilter);
     }
-    
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(order => 
-        order.orderNumber.toLowerCase().includes(term) || 
-        order.userId.toLowerCase().includes(term) ||
-        (order.transactionId && order.transactionId.toLowerCase().includes(term))
+      result = result.filter(
+        (order) =>
+          order.orderNumber.toLowerCase().includes(term) ||
+          order.userId.toLowerCase().includes(term) ||
+          (order.transactionId &&
+            order.transactionId.toLowerCase().includes(term)),
       );
     }
-     if (orderTypeFilter !== 'all') {
-    if (orderTypeFilter === 'guest') {
-      result = result.filter(order => order.isGuestOrder);
-    } else if (orderTypeFilter === 'collect') {
-      result = result.filter(order => order.isConfirmAndCollect);
-    } else if (orderTypeFilter === 'regular') {
-      result = result.filter(order => !order.isGuestOrder && !order.isConfirmAndCollect);
+    if (orderTypeFilter !== "all") {
+      if (orderTypeFilter === "guest") {
+        result = result.filter((order) => order.isGuestOrder);
+      } else if (orderTypeFilter === "collect") {
+        result = result.filter((order) => order.isConfirmAndCollect);
+      } else if (orderTypeFilter === "regular") {
+        result = result.filter(
+          (order) => !order.isGuestOrder && !order.isConfirmAndCollect,
+        );
+      }
     }
-  }
-    
+
     setFilteredOrders(result);
     setCurrentPage(1);
-  }, [statusFilter, searchTerm, orders,orderTypeFilter]);
+  }, [statusFilter, searchTerm, orders, orderTypeFilter]);
 
   // Update order status
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setIsUpdating(true);
-      const token = localStorage.getItem('adminToken');
-      
+      const token = localStorage.getItem("adminToken");
+
       // We'll use the existing refund endpoint pattern to update status
       const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus }),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to update order status');
+        throw new Error("Failed to update order status");
       }
-      
+
       // Update local state
-      setOrders(orders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
-      
+      setOrders(
+        orders.map((order) =>
+          order.id === orderId ? { ...order, status: newStatus } : order,
+        ),
+      );
+
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
-      
     } catch (err) {
       setError(err.message);
     } finally {
@@ -148,12 +161,14 @@ const OrderManagement = ({ onLogout }) => {
   return (
     <div className="order-management">
       <div className="order-header">
-        <h1><FiBox /> Order Management</h1>
+        <h1>
+          <FiBox /> Order Management
+        </h1>
         <div className="header-actions">
           <button onClick={fetchOrders} disabled={isLoading}>
             <FiRefreshCw /> Refresh
           </button>
-                 <button onClick={onLogout} className="logout-btn">
+          <button onClick={onLogout} className="logout-btn">
             Logout
           </button>
         </div>
@@ -169,11 +184,11 @@ const OrderManagement = ({ onLogout }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <div className="filter-group">
           <FiFilter />
-          <select 
-            value={statusFilter} 
+          <select
+            value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="all">All Statuses</option>
@@ -184,17 +199,17 @@ const OrderManagement = ({ onLogout }) => {
             <option value="Cancelled">Cancelled</option>
           </select>
         </div>
-         <div className="filter-group">
-    <select 
-      value={orderTypeFilter} 
-      onChange={(e) => setOrderTypeFilter(e.target.value)}
-    >
-      <option value="all">All Order Types</option>
-      <option value="guest">👤 Guest Orders</option>
-      <option value="collect">🏪 Click & Collect</option>
-      <option value="regular">✓ Registered Users</option>
-    </select>
-  </div>
+        <div className="filter-group">
+          <select
+            value={orderTypeFilter}
+            onChange={(e) => setOrderTypeFilter(e.target.value)}
+          >
+            <option value="all">All Order Types</option>
+            <option value="guest">👤 Guest Orders</option>
+            <option value="collect">🏪 Click & Collect</option>
+            <option value="regular">✓ Registered Users</option>
+          </select>
+        </div>
       </div>
 
       <div className="orders-stats">
@@ -204,29 +219,29 @@ const OrderManagement = ({ onLogout }) => {
         </div>
         <div className="stat-card">
           <h3>Succeeded</h3>
-          <p>{orders.filter(o => o.status === 'Succeeded').length}</p>
+          <p>{orders.filter((o) => o.status === "Succeeded").length}</p>
         </div>
         <div className="stat-card">
           <h3>Shipped</h3>
-          <p>{orders.filter(o => o.status === 'Shipped').length}</p>
+          <p>{orders.filter((o) => o.status === "Shipped").length}</p>
         </div>
         <div className="stat-card">
           <h3>Pending</h3>
-          <p>{orders.filter(o => o.status === 'Pending').length}</p>
+          <p>{orders.filter((o) => o.status === "Pending").length}</p>
         </div>
-         <div className="stat-card">
-    <h3>Guest Orders</h3>
-    <p>{orders.filter(o => o.isGuestOrder).length}</p>
-  </div>
-  <div className="stat-card">
-    <h3>Click & Collect</h3>
-    <p>{orders.filter(o => o.isConfirmAndCollect).length}</p>
-  </div>
+        <div className="stat-card">
+          <h3>Guest Orders</h3>
+          <p>{orders.filter((o) => o.isGuestOrder).length}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Click & Collect</h3>
+          <p>{orders.filter((o) => o.isConfirmAndCollect).length}</p>
+        </div>
       </div>
 
       {selectedOrder ? (
-        <OrderDetail 
-          order={selectedOrder} 
+        <OrderDetail
+          order={selectedOrder}
           onBack={() => setSelectedOrder(null)}
           onStatusUpdate={updateOrderStatus}
           isUpdating={isUpdating}
@@ -249,34 +264,43 @@ const OrderManagement = ({ onLogout }) => {
               </thead>
               <tbody>
                 {currentOrders.length > 0 ? (
-                  currentOrders.map(order => (
+                  currentOrders.map((order) => (
                     <tr key={order.id}>
                       <td>{order.orderNumber}</td>
                       <td>{order.userId}</td>
                       <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                       <td>
-          {/* ORDER TYPE INDICATORS */}
-          <div className="order-type-indicators">
-            {order.isGuestOrder && <span title="Guest Order">👤</span>}
-            {order.isConfirmAndCollect && <span title="Click & Collect">🏪</span>}
-            {!order.isGuestOrder && !order.isConfirmAndCollect && (
-              <span title="Registered User">✓</span>
-            )}
-          </div>
-        </td>
+                      <td>
+                        {/* ORDER TYPE INDICATORS */}
+                        <div className="order-type-indicators">
+                          {order.isGuestOrder && (
+                            <span title="Guest Order">👤</span>
+                          )}
+                          {order.isConfirmAndCollect && (
+                            <span title="Click & Collect">🏪</span>
+                          )}
+                          {!order.isGuestOrder &&
+                            !order.isConfirmAndCollect && (
+                              <span title="Registered User">✓</span>
+                            )}
+                        </div>
+                      </td>
                       <td>${order.totalAmount?.toFixed(2)}</td>
                       <td>
-                        <span className={`status-badge ${order.status.toLowerCase()}`}>
+                        <span
+                          className={`status-badge ${order.status.toLowerCase()}`}
+                        >
                           {order.status}
                         </span>
                       </td>
                       <td>
-                        <span className={`payment-status ${order.paymentStatus?.toLowerCase() || 'unknown'}`}>
-                          {order.paymentStatus || 'N/A'}
+                        <span
+                          className={`payment-status ${order.paymentStatus?.toLowerCase() || "unknown"}`}
+                        >
+                          {order.paymentStatus || "N/A"}
                         </span>
                       </td>
                       <td>
-                        <button 
+                        <button
                           className="btn-view"
                           onClick={() => setSelectedOrder(order)}
                         >
@@ -298,25 +322,27 @@ const OrderManagement = ({ onLogout }) => {
 
           {totalPages > 1 && (
             <div className="pagination">
-              <button 
-                onClick={() => paginate(currentPage - 1)} 
+              <button
+                onClick={() => paginate(currentPage - 1)}
                 disabled={currentPage === 1}
               >
                 <FiArrowLeft /> Previous
               </button>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => paginate(page)}
-                  className={currentPage === page ? 'active' : ''}
-                >
-                  {page}
-                </button>
-              ))}
-              
-              <button 
-                onClick={() => paginate(currentPage + 1)} 
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => paginate(page)}
+                    className={currentPage === page ? "active" : ""}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+
+              <button
+                onClick={() => paginate(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
                 Next <FiArrowRight />
@@ -348,8 +374,8 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
       <div className="order-detail-header">
         <h2>Order #{order.orderNumber}</h2>
         <div className="order-status-control">
-          <select 
-            value={newStatus} 
+          <select
+            value={newStatus}
             onChange={(e) => setNewStatus(e.target.value)}
             disabled={isUpdating}
           >
@@ -359,11 +385,11 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
             <option value="Delivered">Delivered</option>
             <option value="Cancelled">Cancelled</option>
           </select>
-          <button 
+          <button
             onClick={handleStatusUpdate}
             disabled={newStatus === order.status || isUpdating}
           >
-            {isUpdating ? 'Updating...' : 'Update Status'}
+            {isUpdating ? "Updating..." : "Update Status"}
           </button>
         </div>
       </div>
@@ -383,13 +409,15 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
           </div>
           <div className="info-group">
             <label>Payment Status:</label>
-            <span className={`payment-status ${order.paymentStatus?.toLowerCase() || 'unknown'}`}>
-              {order.paymentStatus || 'N/A'}
+            <span
+              className={`payment-status ${order.paymentStatus?.toLowerCase() || "unknown"}`}
+            >
+              {order.paymentStatus || "N/A"}
             </span>
           </div>
           <div className="info-group">
             <label>Transaction ID:</label>
-            <span>{order.transactionId || 'N/A'}</span>
+            <span>{order.transactionId || "N/A"}</span>
           </div>
           <div className="info-group">
             <label>Total Amount:</label>
@@ -405,22 +433,28 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
                 <label>Name:</label>
                 <span>{order.shippingAddress.fullName}</span>
               </div>
-               <div className="info-group">
+              <div className="info-group">
                 <label>Phone:</label>
                 <span>{order.shippingAddress.phoneNumber}</span>
               </div>
-               <div className="info-group">
+              <div className="info-group">
                 <label>Email:</label>
                 <span>{order.user.email}</span>
               </div>
               <div className="info-group">
                 <label>Address:</label>
                 <span>
-                  {order.shippingAddress.addressLine1}<br />
+                  {order.shippingAddress.addressLine1}
+                  <br />
                   {order.shippingAddress.addressLine2 && (
-                    <>{order.shippingAddress.addressLine2}<br /></>
+                    <>
+                      {order.shippingAddress.addressLine2}
+                      <br />
+                    </>
                   )}
-                  {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}<br />
+                  {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+                  {order.shippingAddress.postalCode}
+                  <br />
                   {order.shippingAddress.country}
                 </span>
               </div>
@@ -434,7 +468,7 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
           <h3>Order Items</h3>
           {order.items && order.items.length > 0 ? (
             <div className="items-list">
-              {order.items.map(item => (
+              {order.items.map((item) => (
                 <div key={item.id} className="order-item">
                   <div className="item-image">
                     {item.imageUrl ? (

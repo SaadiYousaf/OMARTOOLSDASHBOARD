@@ -23,7 +23,16 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    sans-serif;
   line-height: 1.6;
   color: var(--dark-color);
   background-color: #f5f7fa;
@@ -83,8 +92,8 @@ body {
 }
 
 /* Stats Grid */
-.stats-grid {
-  display: grid;
+.stats-grid-p {
+  display: flex;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
@@ -464,7 +473,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .text-center {
@@ -633,7 +644,8 @@ body {
 .rich-text-editor .jodit-wysiwyg {
   padding: 16px !important;
   min-height: 250px !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
   background: white !important;
@@ -655,7 +667,9 @@ body {
 /* Link dialog and other popups */
 .rich-text-editor .jodit-dialog__box {
   border-radius: 8px !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
 }
 
 .rich-text-editor .jodit-dialog__header {
@@ -676,7 +690,7 @@ body {
   .rich-text-editor .jodit-toolbar__box {
     padding: 4px !important;
   }
-  
+
   .rich-text-editor .jodit-wysiwyg {
     padding: 12px !important;
     min-height: 200px !important;
@@ -689,27 +703,27 @@ body {
     background: #1a1a1a !important;
     color: #e9ecef !important;
   }
-  
+
   .rich-text-editor .jodit-toolbar__box {
     background: #2d3748 !important;
     border-color: #4a5568 !important;
   }
-  
+
   .rich-text-editor .jodit-wysiwyg {
     background: #1a1a1a !important;
     color: #e9ecef !important;
   }
-  
+
   .rich-text-editor .jodit-status-bar {
     background: #2d3748 !important;
     border-color: #4a5568 !important;
     color: #a0aec0 !important;
   }
-  
+
   .rich-text-editor .jodit-toolbar-button__button {
     color: #e9ecef !important;
   }
-  
+
   .rich-text-editor .jodit-toolbar-button:hover {
     background: #4a5568 !important;
   }
@@ -855,7 +869,8 @@ body {
   }
 
   /* Hide page numbers on very small screens, show only active */
-  .pagination-buttons button:not(.active):not(.pagination-nav):not(.pagination-edge) {
+  .pagination-buttons
+    button:not(.active):not(.pagination-nav):not(.pagination-edge) {
     display: none;
   }
 
@@ -874,7 +889,7 @@ body {
 }
 
 .pagination-buttons button::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -922,7 +937,7 @@ body {
     width: 100%;
   }
 
-  .stats-grid {
+  .stats-grid-p {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -932,7 +947,7 @@ body {
     padding: 1rem;
   }
 
-  .stats-grid {
+  .stats-grid-p {
     grid-template-columns: 1fr;
   }
 
@@ -1110,7 +1125,7 @@ body {
 }
 
 .json-editor textarea {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -1171,12 +1186,12 @@ body {
   .editor-toolbar {
     flex-wrap: wrap;
   }
-  
+
   .toolbar-btn {
     padding: 4px 8px;
     font-size: 0.8rem;
   }
-  
+
   .rich-textarea {
     min-height: 100px;
   }
@@ -1239,152 +1254,152 @@ body {
 }
 
 .existing-images {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .existing-images h4 {
-    margin-bottom: 10px;
-    color: #333;
+  margin-bottom: 10px;
+  color: #333;
 }
 
 .image-preview.existing {
-    border: 2px solid #3498db;
-    position: relative;
+  border: 2px solid #3498db;
+  position: relative;
 }
 
 .image-preview.new {
-    border: 2px solid #27ae60;
-    position: relative;
+  border: 2px solid #27ae60;
+  position: relative;
 }
 
 .image-info {
-    position: absolute;
-    top: 5px;
-    left: 5px;
+  position: absolute;
+  top: 5px;
+  left: 5px;
 }
 
 .primary-badge {
-    background: #af2727;
-    opacity: 80%;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.7rem;
-    font-weight: bold;
+  background: #af2727;
+  opacity: 80%;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
 }
 
 .preview-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .image-preview {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.2s ease;
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
 }
 
 .image-preview:hover {
-    transform: scale(1.05);
+  transform: scale(1.05);
 }
 
 .image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .remove-image-btn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: rgba(231, 76, 60, 0.9);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: all 0.2s ease;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
 }
 
 .remove-image-btn:hover {
-    background: #e74c3c;
-    transform: scale(1.1);
+  background: #e74c3c;
+  transform: scale(1.1);
 }
 
 .remove-image-btn:disabled {
-    background: #95a5a6;
-    cursor: not-allowed;
-    transform: none;
+  background: #95a5a6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Warning for primary image deletion */
 .image-preview.existing:first-child .remove-image-btn {
-    background: rgba(243, 156, 18, 0.9);
+  background: rgba(243, 156, 18, 0.9);
 }
 
 .image-preview.existing:first-child .remove-image-btn:hover {
-    background: #f39c12;
+  background: #f39c12;
 }
 
 .image-preview.existing:first-child .remove-image-btn::after {
-    content: ' (Primary)';
-    position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.6rem;
-    white-space: nowrap;
-    color: #e74c3c;
-    font-weight: bold;
+  content: " (Primary)";
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  white-space: nowrap;
+  color: #e74c3c;
+  font-weight: bold;
 }
 
 /* View button styles */
 .btn-icon.btn-view {
-    background: #10b981;
-    color: white;
-    border: none;
-    padding: 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .btn-icon.btn-view:hover {
-    background: #059669;
+  background: #059669;
 }
 
 .btn-icon.btn-view:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
+  background: #9ca3af;
+  cursor: not-allowed;
 }
 
 /* Action buttons container adjustments */
 .action-buttons {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 /* Responsive adjustments for action buttons */
 @media (max-width: 768px) {
-    .action-buttons {
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .btn-icon {
-        padding: 6px;
-    }
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-icon {
+    padding: 6px;
+  }
 }
 
 /* Modal Styles */

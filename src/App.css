@@ -25,7 +25,7 @@
 }
 
 .stats-grid {
-  display: flex !important; /* force flex */
+  display: grid !important; /* force flex */
   flex-direction: row !important; /* row only */
   justify-content: flex-start; /* align cards left */
   align-items: flex-start;
@@ -46,7 +46,9 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .logout-btn:active {
   transform: translateY(0);
@@ -191,7 +193,7 @@
 }
 
 .App-header h1 {
-  margin: 0;
+  margin: 50px;
   font-size: 1.5rem;
 }
 
@@ -206,7 +208,7 @@
 }
 
 .loading::after {
-  content: '';
+  content: "";
   width: 30px;
   height: 30px;
   margin-left: 10px;
@@ -217,19 +219,17 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Logout Button */
 .logout-btn {
-  padding: 8px 16px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
+  display: none;
 }
 
 .logout-btn:hover {
@@ -249,18 +249,18 @@ main {
     padding: 10px;
     text-align: center;
   }
-  
+
   .admin-nav {
     margin: 10px 0;
     width: 100%;
   }
-  
+
   .admin-nav ul {
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
   }
-  
+
   .logout-btn {
     margin-top: 10px;
   }

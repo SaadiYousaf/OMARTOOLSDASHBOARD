@@ -1,15 +1,15 @@
 // App.tsx
-import React, { useState, useEffect } from 'react';
-import { ProductServiceProvider } from './context/ProductServiceContext';
-import { Routes, Route, BrowserRouter, Navigate,Link } from "react-router-dom";
-import './App.css';
-import ProductManagement from './components/ProductManagement/ProductManagement';
-import OrderManagement from './components/OrderManagement/OrderManagement';
-import AdminLogin from './components/Admin/AdminLogin';
-import ProductList from './components/ProductList/ProductList';
-import AdminDashboard from './components/AdminDashboard/AdminDashboard'; 
-import BlogManagement from './components/BlogManagement/BlogManagement';
-import BlogEditor from './components/BlogManagement/BlogEditor';
+import React, { useState, useEffect } from "react";
+import { ProductServiceProvider } from "./context/ProductServiceContext";
+import { Routes, Route, BrowserRouter, Navigate, Link } from "react-router-dom";
+import "./App.css";
+import ProductManagement from "./components/ProductManagement/ProductManagement";
+import OrderManagement from "./components/OrderManagement/OrderManagement";
+import AdminLogin from "./components/Admin/AdminLogin";
+import ProductList from "./components/ProductList/ProductList";
+import AdminDashboard from "./components/AdminDashboard/AdminDashboard";
+import BlogManagement from "./components/BlogManagement/BlogManagement";
+import BlogEditor from "./components/BlogManagement/BlogEditor";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,24 +17,24 @@ function App() {
 
   // Add logout function
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUser');
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
     setIsAuthenticated(false);
   };
 
   useEffect(() => {
     // Check if user is already logged in
-    const token = localStorage.getItem('adminToken');
-    const userStr = localStorage.getItem('adminUser');
-    
+    const token = localStorage.getItem("adminToken");
+    const userStr = localStorage.getItem("adminUser");
+
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
-        if (user && (user.role === 'Admin' || user.role === 'SuperAdmin')) {
+        if (user && (user.role === "Admin" || user.role === "SuperAdmin")) {
           setIsAuthenticated(true);
         }
       } catch (e) {
-        console.error('Error parsing user data from localStorage:', e);
+        console.error("Error parsing user data from localStorage:", e);
       }
     }
     setIsLoading(false);
@@ -57,89 +57,110 @@ function App() {
               </button>
             </header>
           )}
-          
+
           <main>
             <Routes>
               {/* Public routes */}
-              <Route 
-                path="/admin/login" 
+              <Route
+                path="/admin/login"
                 element={
-                  !isAuthenticated ? 
-                  <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} /> : 
-                  <Navigate to="/admin/dashboard" replace />
-                } 
+                  !isAuthenticated ? (
+                    <AdminLogin
+                      onLoginSuccess={() => setIsAuthenticated(true)}
+                    />
+                  ) : (
+                    <Navigate to="/admin/dashboard" replace />
+                  )
+                }
               />
-              
+
               {/* Protected routes */}
-              <Route 
-                path="/admin/dashboard" 
+              <Route
+                path="/admin/dashboard"
                 element={
-                  isAuthenticated ? 
-                  <AdminDashboard onLogout={handleLogout} /> : 
-                  <Navigate to="/admin/login" replace />
-                } 
+                  isAuthenticated ? (
+                    <AdminDashboard onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                }
               />
-              
-              <Route 
-                path="/orders" 
+
+              <Route
+                path="/orders"
                 element={
-                  isAuthenticated ? 
-                  <OrderManagement onLogout={handleLogout} /> : 
-                  <Navigate to="/admin/login" replace />
-                } 
+                  isAuthenticated ? (
+                    <OrderManagement onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                }
               />
-              
-              <Route 
-                path="/products" 
+
+              <Route
+                path="/products"
                 element={
-                  isAuthenticated ? 
-                  <ProductManagement /> : 
-                  <Navigate to="/admin/login" replace />
-                } 
+                  isAuthenticated ? (
+                    <ProductManagement />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                }
               />
-               {/* BLOG ROUTES - ADD THESE */}
-              <Route 
-                path="/admin/blog" 
+              {/* BLOG ROUTES - ADD THESE */}
+              <Route
+                path="/admin/blog"
                 element={
-                  isAuthenticated ? 
-                  <BlogManagement onLogout={handleLogout} /> : 
-                  <Navigate to="/admin/login" replace />
-                } 
+                  isAuthenticated ? (
+                    <BlogManagement onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                }
               />
-              
-              <Route 
-                path="/admin/blog/create" 
+
+              <Route
+                path="/admin/blog/create"
                 element={
-                  isAuthenticated ? 
-                  <BlogEditor /> : 
-                  <Navigate to="/admin/login" replace />
-                } 
+                  isAuthenticated ? (
+                    <BlogEditor />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                }
               />
-              
-              <Route 
-                path="/admin/blog/edit/:id" 
+
+              <Route
+                path="/admin/blog/edit/:id"
                 element={
-                  isAuthenticated ? 
-                  <BlogEditor /> : 
-                  <Navigate to="/admin/login" replace />
-                } 
+                  isAuthenticated ? (
+                    <BlogEditor />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                }
               />
               {/* Default redirects */}
-              <Route 
-                path="/" 
+              <Route
+                path="/"
                 element={
-                  isAuthenticated ? 
-                  <Navigate to="/admin/dashboard" replace /> : 
-                  <Navigate to="/admin/login" replace />
-                } 
+                  isAuthenticated ? (
+                    <Navigate to="/admin/dashboard" replace />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                }
               />
-              
+
               {/* Catch all route */}
-              <Route 
-                path="*" 
+              <Route
+                path="*"
                 element={
-                  <Navigate to={isAuthenticated ? "/admin/dashboard" : "/admin/login"} replace />
-                } 
+                  <Navigate
+                    to={isAuthenticated ? "/admin/dashboard" : "/admin/login"}
+                    replace
+                  />
+                }
               />
             </Routes>
           </main>
