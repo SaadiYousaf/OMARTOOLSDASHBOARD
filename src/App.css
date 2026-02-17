@@ -229,7 +229,7 @@
 
 /* Logout Button */
 .logout-btn {
-  display: none;
+  color: tomato;
 }
 
 .logout-btn:hover {
