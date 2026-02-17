@@ -1894,3 +1894,136 @@ body {
     margin-right: 8px; /* space between icon and label if using title */
   }
 }
+@media (max-width: 768px) {
+  /* Hide header */
+  .data-table thead {
+    display: none;
+  }
+
+  /* Make table behave like cards */
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* Each row becomes a card */
+  .data-table tr {
+    background: #ffffff;
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Stack content */
+  .data-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 14px;
+  }
+
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Make action buttons wrap properly */
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .btn-icon {
+    padding: 6px;
+  }
+
+  /* Improve spacing for content blocks */
+  .customer-contact,
+  .claim-id,
+  .serial-number {
+    font-size: 12px;
+    color: #777;
+  }
+  .dashboard-header {
+    width: 370px;
+    padding: 0px;
+    font-size: 1 rem;
+  }
+  .dashboard-main {
+    margin: 10px;
+  }
+  .dashboard-content {
+    width: 400px;
+    max-width: 100%;
+    padding: 0px;
+    box-sizing: border-box;
+  }
+  .card-body {
+    width: 100%;
+    max-width: 100%;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    width: 400px;
+  }
+  .card-header {
+    width: 430px;
+  }
+  .card-body {
+    width: 430px;
+  }
+  .data-table {
+    width: 400px;
+  }
+  .stats-card {
+    width: 170px;
+  }
+  .data-table th,
+  .data-table td {
+    font-size: 12px;
+    padding: 2px;
+  }
+  .data-table tbody {
+    width: 900px;
+  }
+  .action-buttons {
+    display: none;
+  }
+
+  .mobile-actions {
+    display: flex;
+    flex-direction: column; /* stack buttons vertically */
+    align-items: flex-start;
+    gap: 6px; /* spacing between buttons */
+  }
+
+  .mobile-action {
+    width: 100%; /* make buttons full width */
+    display: flex;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    font-size: 16px;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    transition:
+      background 0.2s,
+      color 0.2s;
+  }
+
+  .mobile-actions .btn-icon:hover {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  .mobile-actions svg {
+    margin-right: 8px; /* space between icon and label if using title */
+  }
+}
