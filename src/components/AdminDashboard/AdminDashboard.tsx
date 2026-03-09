@@ -11,7 +11,7 @@ import "./AdminDashboard.css";
 import { CategoryDto } from "../../types/product";
 import BlogManagement from "../BlogManagement/BlogManagement";
 import WarrantyClaimManagement from "../WarrantyClaimManagement/WarrantyClaimManagement";
-
+import BulkImportUpdate from "../BulkOperations/BulkImportUpdate";
 interface AdminDashboardProps {
   onLogout: () => void;
 }
@@ -25,6 +25,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     | "subcategory"
     | "blog"
     | "warranty"
+    | "bulk"
   >("order");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
@@ -45,6 +46,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         return "Blog Management";
       case "warranty":
         return "Warranty Claim Management";
+        case "bulk":
+        return "Bulk Operations";
       default:
         return "Admin Dashboard";
     }
@@ -60,6 +63,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     if (activeTab === "subcategory") {
       fetchCategories();
     }
+  };
+    const handleBackToDashboard = () => {
+    setActiveTab("order"); // or any default tab you prefer
   };
 
   const fetchCategories = async () => {
@@ -113,6 +119,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           {activeTab === "blog" && <BlogManagement onLogout={onLogout} />}
           {activeTab === "warranty" && ( // Add this
             <WarrantyClaimManagement />
+          )}
+            {activeTab === "bulk" && (
+            <BulkImportUpdate onBack={handleBackToDashboard} />
           )}
         </div>
       </div>

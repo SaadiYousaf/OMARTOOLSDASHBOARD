@@ -1,9 +1,9 @@
 import React from 'react';
-import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight,FiShoppingBag, FiBook, FiClipboard } from 'react-icons/fi';
+import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight,FiShoppingBag, FiBook, FiClipboard, FiPackage } from 'react-icons/fi';
 
 interface DashboardSidebarProps {
-  activeTab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty';
-  onTabChange: (tab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty') => void;
+  activeTab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty' | 'bulk';
+  onTabChange: (tab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty'| 'bulk') => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -34,6 +34,16 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             <button onClick={() => onTabChange('product')}>
               <FiHome />
               {!collapsed && <span>Products</span>}
+            </button>
+          </li>
+           <li className={activeTab === 'bulk' ? 'active' : ''}>
+            <button onClick={() => onTabChange('bulk')}>
+              <FiPackage />
+              {!collapsed && (
+                <>
+                  <span>Bulk Operations</span>
+                </>
+              )}
             </button>
           </li>
           <li className={activeTab === 'brand' ? 'active' : ''}>
