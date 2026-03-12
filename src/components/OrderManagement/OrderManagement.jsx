@@ -12,6 +12,7 @@ import {
   FiEdit,
   FiArrowLeft,
   FiArrowRight,
+  FiAlertCircle,
 } from "react-icons/fi";
 import "./OrderManagement.css";
 
@@ -364,7 +365,9 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
       onStatusUpdate(order.id, newStatus);
     }
   };
-
+  const hasOrderRequiredItems = () => {
+    return order.items?.some(item => item.isOrderRequired === true) || false;
+  };
   return (
     <div className="order-detail">
       <button className="back-button" onClick={onBack}>
@@ -373,6 +376,11 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
 
       <div className="order-detail-header">
         <h2>Order #{order.orderNumber}</h2>
+        {hasOrderRequiredItems() && (
+          <div className="order-required-ribbon">
+            <FiAlertCircle /> Contains items that require special ordering
+          </div>
+        )}
         <div className="order-status-control">
           <select
             value={newStatus}
@@ -484,6 +492,11 @@ const OrderDetail = ({ order, onBack, onStatusUpdate, isUpdating }) => {
                     <p>Product ID: {item.productId}</p>
                     <p>Quantity: {item.quantity}</p>
                     <p>Price: ${item.unitPrice?.toFixed(2)} each</p>
+                    {item.isOrderRequired && (
+                      <p className="item-required-note">
+                        ⚠️ This item must be ordered from supplier
+                      </p>
+                    )}
                   </div>
                   <div className="item-total">
                     ${(item.unitPrice * item.quantity).toFixed(2)}

@@ -510,6 +510,7 @@ const ProductManagement = () => {
         isActive: currentProduct.isActive !== false,
         isFeatured: currentProduct.isFeatured || false,
         isRedemption: currentProduct.isRedemption || false,
+        isOrderRequired:currentProduct.isOrderRequired || false,
         // Ensure numeric fields are properly formatted
         price: Number(currentProduct.price) || 0,
         stockQuantity: Number(currentProduct.stockQuantity) || 0,
@@ -614,6 +615,7 @@ const ProductManagement = () => {
       specifications: "{}",
       price: 0,
       isRedemption: false,
+      isOrderRequired:false,
       stockQuantity: 0,
       isFeatured: false,
       isActive: true,
@@ -898,6 +900,16 @@ const ProductManagement = () => {
                                   {product.isFeatured &&
                                     product.isActive &&
                                     " ★"}
+                                    
+                                </span>
+                                <span
+                                  className={`status-badge ${
+                                    product.isOrderRequired ? "stockrequired" : "active"
+                                  }`}
+                                >
+                                  {product.isOrderRequired ? "Stock Required" : "InStock"}
+                                
+                                    
                                 </span>
                               </td>
                               <td>
@@ -1233,7 +1245,7 @@ const ProductManagement = () => {
                             type="number"
                             name="stockQuantity"
                             min="0"
-                            value={currentProduct?.stockQuantity || ""}
+                            value={currentProduct?.stockQuantity !== undefined ? currentProduct.stockQuantity : ""}
                             onChange={handleInputChange}
                             required
                           />
@@ -1398,6 +1410,18 @@ const ProductManagement = () => {
                           />
                           <label htmlFor="isRedemption">
                             Is Redemption Product
+                          </label>
+                        </div>
+                         <div className="form-group checkbox-group">
+                          <input
+                            type="checkbox"
+                            name="isOrderRequired"
+                            checked={currentProduct?.isOrderRequired || false}
+                            onChange={handleInputChange}
+                            id="isOrderRequired"
+                          />
+                          <label htmlFor="isRedemption">
+                            Stock Required
                           </label>
                         </div>
                         <div className="form-group">

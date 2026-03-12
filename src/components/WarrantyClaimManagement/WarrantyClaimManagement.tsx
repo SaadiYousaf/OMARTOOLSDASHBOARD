@@ -1256,7 +1256,7 @@ const WarrantyClaimManagement: React.FC = () => {
                       <td>
                         <div className="action-buttons">
                           <button
-                            className="btn-icon btn-view"
+                            className="btn-icon btn-view-w"
                             onClick={() => handleViewDetails(claim)}
                             title="View Details"
                           >

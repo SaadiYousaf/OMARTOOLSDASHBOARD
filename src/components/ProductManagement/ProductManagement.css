@@ -342,6 +342,10 @@ body {
   background-color: #fee2e2;
   color: #b91c1c;
 }
+.status-badge.stockrequired {
+  background-color: #fee2e2;
+  color: #000000;
+}
 
 .stock-badge {
   display: inline-block;

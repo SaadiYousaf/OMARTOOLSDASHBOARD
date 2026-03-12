@@ -121,6 +121,50 @@
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
+.required-items-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #ffeeba;
+}
+
+.required-items-badge svg {
+  font-size: 14px;
+}
+
+/* Row highlighting for orders with required items */
+.has-required-items {
+  background-color: #fff9e6;
+}
+
+.has-required-items:hover {
+  background-color: #fff3cd !important;
+}
+
+/* Order required ribbon in detail view */
+.order-required-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #dc3545;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 16px;
+}
+
+.order-required-ribbon svg {
+  font-size: 18px;
+}
+
 
 .filter-group {
     display: flex;
