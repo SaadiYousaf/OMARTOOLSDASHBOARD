@@ -596,6 +596,44 @@ const ProductManagement = () => {
     }
   };
 
+  const handleToggleOrderRequired = async (product: Product) => {
+  setIsLoading(true);
+  setError(null);
+  
+  try {
+    const updatedProduct = {
+      ...product,
+      isOrderRequired: !product.isOrderRequired
+    };
+
+    const response = await fetch(`${API_BASE_URL}/products/${product.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedProduct)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to update stock required status');
+    }
+
+    // Update local state
+    setProducts(prevProducts => 
+      prevProducts.map(p => 
+        p.id === product.id 
+          ? { ...p, isOrderRequired: !p.isOrderRequired }
+          : p
+      )
+    );
+
+    setSuccess(true);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to update stock required status');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   const handleNewProduct = () => {
     setSelectedCategoryId("");
     setSelectedBrandId("");
@@ -813,6 +851,7 @@ const ProductManagement = () => {
                           <th>Stock</th>
                           <th>Redemption</th>
                           <th>Status</th>
+                          <th>Stock Required</th> 
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -912,6 +951,18 @@ const ProductManagement = () => {
                                     
                                 </span>
                               </td>
+<td>
+  <label className="switch-toggle">
+    <input
+      type="checkbox"
+      checked={product.isOrderRequired || false}
+      onChange={() => handleToggleOrderRequired(product)}
+      disabled={isLoading}
+    />
+    <span className="switch-slider"></span>
+  </label>
+</td>
+ 
                               <td>
                                 <div className="action-buttons">
                                   <button
