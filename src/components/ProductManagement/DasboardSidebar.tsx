@@ -1,9 +1,9 @@
 import React from 'react';
-import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight,FiShoppingBag, FiBook, FiClipboard, FiPackage } from 'react-icons/fi';
+import { FiHome, FiTag, FiLayers, FiGrid, FiChevronLeft, FiChevronRight, FiShoppingBag, FiBook, FiClipboard, FiPackage, FiTool, FiImage } from 'react-icons/fi';
 
 interface DashboardSidebarProps {
-  activeTab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty' | 'bulk';
-  onTabChange: (tab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog'| 'warranty'| 'bulk') => void;
+  activeTab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog' | 'warranty' | 'bulk' | 'customkit' | 'homepage';
+  onTabChange: (tab: 'order' | 'product' | 'brand' | 'category' | 'subcategory' | 'blog' | 'warranty' | 'bulk' | 'customkit' | 'homepage') => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -76,6 +76,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             <button onClick={() => onTabChange('warranty')}>
               <FiClipboard />
               {!collapsed && <span>Warranty Claims</span>}
+            </button>
+          </li>
+          <li className={activeTab === 'customkit' ? 'active' : ''}>
+            <button onClick={() => onTabChange('customkit')}>
+              <FiTool />
+              {!collapsed && <span>Custom Kits</span>}
+            </button>
+          </li>
+          <li className={activeTab === 'homepage' ? 'active' : ''}>
+            <button onClick={() => onTabChange('homepage')}>
+              <FiImage />
+              {!collapsed && <span>Homepage Settings</span>}
             </button>
           </li>
         </ul>

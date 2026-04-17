@@ -12,6 +12,9 @@ import { CategoryDto } from "../../types/product";
 import BlogManagement from "../BlogManagement/BlogManagement";
 import WarrantyClaimManagement from "../WarrantyClaimManagement/WarrantyClaimManagement";
 import BulkImportUpdate from "../BulkOperations/BulkImportUpdate";
+import CustomKitManagement from "../CustomKitManagement/CustomKitManagement";
+import HomepageSettings from "../HomepageSettings/HomepageSettings";
+
 interface AdminDashboardProps {
   onLogout: () => void;
 }
@@ -26,6 +29,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     | "blog"
     | "warranty"
     | "bulk"
+    | "customkit"
+    | "homepage"
   >("order");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
@@ -48,6 +53,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         return "Warranty Claim Management";
         case "bulk":
         return "Bulk Operations";
+      case "customkit":
+        return "Custom Kits";
+      case "homepage":
+        return "Homepage Settings";
       default:
         return "Admin Dashboard";
     }
@@ -122,6 +131,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           )}
             {activeTab === "bulk" && (
             <BulkImportUpdate onBack={handleBackToDashboard} />
+          )}
+          {activeTab === "customkit" && (
+            <CustomKitManagement />
+          )}
+          {activeTab === "homepage" && (
+            <HomepageSettings />
           )}
         </div>
       </div>

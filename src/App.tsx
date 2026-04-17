@@ -1,7 +1,10 @@
 // App.tsx
 import React, { useState, useEffect } from "react";
 import { ProductServiceProvider } from "./context/ProductServiceContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { Routes, Route, BrowserRouter, Navigate, Link } from "react-router-dom";
+import ToastContainer from "./components/shared/ToastContainer";
+import "./styles/design-system.css";
 import "./App.css";
 import ProductManagement from "./components/ProductManagement/ProductManagement";
 import OrderManagement from "./components/OrderManagement/OrderManagement";
@@ -46,7 +49,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ProductServiceProvider>
+      <NotificationProvider>
+        <ProductServiceProvider>
         <div className="App">
           {isAuthenticated && (
             <header className="App-header">
@@ -164,8 +168,10 @@ function App() {
               />
             </Routes>
           </main>
+          <ToastContainer />
         </div>
-      </ProductServiceProvider>
+        </ProductServiceProvider>
+      </NotificationProvider>
     </BrowserRouter>
   );
 }
