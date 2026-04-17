@@ -9,10 +9,18 @@
   /* Adjust styles when sidebar is collapsed */
 }
 
+/* Account for fixed sidebar (250px) */
 .dashboard-main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+  min-width: 0;
+}
+
+.admin-dashboard.sidebar-collapsed .dashboard-main {
+  margin-left: 80px;
 }
 
 .dashboard-content {
@@ -26,4 +34,79 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth tab transitions */
+.page-transition {
+  animation: pageFadeIn 0.25s ease-out;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  .dashboard-content {
+    padding: 16px;
+  }
+}
+
+/* ── Mobile (≤ 768px) ── force sidebar to icon-only mode ── */
+@media (max-width: 768px) {
+  /* Collapse sidebar to icon-only at mobile */
+  .dashboard-sidebar {
+    width: 64px !important;
+  }
+
+  .dashboard-sidebar .sidebar-header h3,
+  .dashboard-sidebar .sidebar-nav li button span {
+    display: none;
+  }
+
+  .dashboard-sidebar .sidebar-toggle {
+    margin: 0 auto;
+  }
+
+  .dashboard-main {
+    margin-left: 64px;
+  }
+
+  .admin-dashboard.sidebar-collapsed .dashboard-main {
+    margin-left: 64px;
+  }
+
+  .dashboard-content {
+    padding: 12px;
+  }
+
+  .management-section {
+    padding: 14px;
+    border-radius: 6px;
+  }
+}
+
+/* ── Small mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .dashboard-sidebar {
+    width: 56px !important;
+  }
+
+  .dashboard-main {
+    margin-left: 56px;
+  }
+
+  .admin-dashboard.sidebar-collapsed .dashboard-main {
+    margin-left: 56px;
+  }
+
+  .dashboard-content {
+    padding: 8px;
+  }
+
+  .management-section {
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
 }
