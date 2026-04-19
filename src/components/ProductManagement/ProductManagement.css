@@ -337,6 +337,11 @@ body {
   background-color: #d1fae5;
   color: #065f46;
 }
+
+.status-badge.customkit {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
 /* Switch Toggle Styles */
 .switch-toggle {
   position: relative;

@@ -510,7 +510,9 @@ const ProductManagement = () => {
         isActive: currentProduct.isActive !== false,
         isFeatured: currentProduct.isFeatured || false,
         isRedemption: currentProduct.isRedemption || false,
-        isOrderRequired:currentProduct.isOrderRequired || false,
+        isOrderRequired: currentProduct.isOrderRequired || false,
+        isCustomKit: currentProduct.isCustomKit || false,
+        kitItemType: currentProduct.kitItemType || "",
         // Ensure numeric fields are properly formatted
         price: Number(currentProduct.price) || 0,
         stockQuantity: Number(currentProduct.stockQuantity) || 0,
@@ -653,7 +655,9 @@ const ProductManagement = () => {
       specifications: "{}",
       price: 0,
       isRedemption: false,
-      isOrderRequired:false,
+      isOrderRequired: false,
+      isCustomKit: false,
+      kitItemType: "",
       stockQuantity: 0,
       isFeatured: false,
       isActive: true,
@@ -850,8 +854,9 @@ const ProductManagement = () => {
                           <th>Price</th>
                           <th>Stock</th>
                           <th>Redemption</th>
+                          <th>Custom Kit</th>
                           <th>Status</th>
-                          <th>Stock Required</th> 
+                          <th>Stock Required</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -928,6 +933,17 @@ const ProductManagement = () => {
                                 >
                                   {product.isRedemption ? "Yes" : "No"}
                                 </span>
+                              </td>
+                              <td>
+                                {product.isCustomKit ? (
+                                  <span className="status-badge customkit">
+                                    {product.kitItemType
+                                      ? product.kitItemType.charAt(0).toUpperCase() + product.kitItemType.slice(1)
+                                      : "Kit Item"}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: "#aaa", fontSize: "12px" }}>—</span>
+                                )}
                               </td>
                               <td>
                                 <span
@@ -1463,7 +1479,7 @@ const ProductManagement = () => {
                             Is Redemption Product
                           </label>
                         </div>
-                         <div className="form-group checkbox-group">
+                        <div className="form-group checkbox-group">
                           <input
                             type="checkbox"
                             name="isOrderRequired"
@@ -1471,10 +1487,37 @@ const ProductManagement = () => {
                             onChange={handleInputChange}
                             id="isOrderRequired"
                           />
-                          <label htmlFor="isRedemption">
+                          <label htmlFor="isOrderRequired">
                             Stock Required
                           </label>
                         </div>
+                        <div className="form-group checkbox-group">
+                          <input
+                            type="checkbox"
+                            name="isCustomKit"
+                            checked={currentProduct?.isCustomKit || false}
+                            onChange={handleInputChange}
+                            id="isCustomKit"
+                          />
+                          <label htmlFor="isCustomKit">
+                            Custom Kit Product
+                          </label>
+                        </div>
+                        {currentProduct?.isCustomKit && (
+                          <div className="form-group">
+                            <label>Kit Item Type</label>
+                            <select
+                              name="kitItemType"
+                              value={currentProduct?.kitItemType || ""}
+                              onChange={handleInputChange}
+                            >
+                              <option value="">Select type...</option>
+                              <option value="tool">Tool</option>
+                              <option value="battery">Battery</option>
+                              <option value="charger">Charger</option>
+                            </select>
+                          </div>
+                        )}
                         <div className="form-group">
                           <label>Specifications (JSON)</label>
                           <div className="json-editor">
