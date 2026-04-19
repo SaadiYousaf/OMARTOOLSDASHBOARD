@@ -18,7 +18,9 @@ export interface Product {
   isFeatured: boolean;
   warrantyPeriod?: string;      // "1 year", "2 years", etc.
   isActive: boolean;
-  isOrderRequired:boolean;
+  isOrderRequired: boolean;
+  isCustomKit: boolean;
+  kitItemType?: string;
   createdAt?: string;
   updatedAt?: string;
       // SEO Fields
