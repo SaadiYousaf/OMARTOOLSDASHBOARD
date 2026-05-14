@@ -268,7 +268,7 @@ const OrderManagement = ({ onLogout }) => {
                   currentOrders.map((order) => (
                     <tr key={order.id}>
                       <td>{order.orderNumber}</td>
-                      <td>{order.userId}</td>
+                      <td>{order.user.firstName}</td>
                       <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                       <td>
                         {/* ORDER TYPE INDICATORS */}
